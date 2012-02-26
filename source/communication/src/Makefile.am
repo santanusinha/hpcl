@@ -4,7 +4,8 @@ libhpcl_communication_la_SOURCES = \
                             meminfo.cpp \
                             socket.cpp \
                             socket_factory.cpp \
-                            server_socket.cpp
+                            server_socket.cpp \
+                            local_communicator.cpp
 
 AM_CXXFLAGS = -Wall -Wextra -Weffc++ -std=c++0x -pthread
 

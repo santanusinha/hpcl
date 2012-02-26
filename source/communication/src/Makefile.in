@@ -69,7 +69,7 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libhpcl_communication_la_LIBADD =
 am_libhpcl_communication_la_OBJECTS = meminfo.lo socket.lo \
-	socket_factory.lo server_socket.lo
+	socket_factory.lo server_socket.lo local_communicator.lo
 libhpcl_communication_la_OBJECTS =  \
 	$(am_libhpcl_communication_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -213,7 +213,8 @@ libhpcl_communication_la_SOURCES = \
                             meminfo.cpp \
                             socket.cpp \
                             socket_factory.cpp \
-                            server_socket.cpp
+                            server_socket.cpp \
+                            local_communicator.cpp
 
 AM_CXXFLAGS = -Wall -Wextra -Weffc++ -std=c++0x -pthread
 INCLUDES = -I$(top_srcdir)/source/common/include/ \
@@ -294,6 +295,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/local_communicator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/meminfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server_socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/socket.Plo@am__quote@
