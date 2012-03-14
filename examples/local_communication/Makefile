@@ -1,14 +1,22 @@
 
+CPPFLAGS += -I $(HPCL_BASE)/include
+CXXFLAGS += -Wall -Wextra -Weffc++ -std=c++0x -pthread 
+
+LDFLAGS += -L $(HPCL_BASE)/lib \
+           -lhpcl-communication \
+           -lhpcl-common \
+           -Wl,-rpath -Wl,$(HPCL_BASE)/lib
+
 all: client server
 
-client: client.cpp
-		g++ -Wall -Wextra -Weffc++ client.cpp -o client -g -std=c++0x -pthread -lhpcl-communication -lhpcl-common -I /home/santanu/tmp/include -L /home/santanu/tmp/lib -Wl,-rpath -Wl,/home/santanu/tmp/lib
+client: client.o
+		${CXX} $< ${CXXFLAGS} ${LDFLAGS} -o $@
 
-server: server.cpp
-		g++ -Wall -Wextra -Weffc++ server.cpp -o server -g -std=c++0x -pthread -lhpcl-communication -lhpcl-common -I /home/santanu/tmp/include -L /home/santanu/tmp/lib -Wl,-rpath -Wl,/home/santanu/tmp/lib
+server: server.o
+		${CXX} $< ${CXXFLAGS} ${LDFLAGS} -o $@
 
 .PHONY: clean
 
 clean:
-	-rm -f client server
+	-rm -f client server *.o
 

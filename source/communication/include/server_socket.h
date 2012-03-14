@@ -28,9 +28,10 @@
 
 #include <boost/signals2.hpp>
 
-#include "notifier.h"
 #include "socket.h"
 #include "socket_factory.h"
+
+namespace Hpcl { class Notifier; }
 
 namespace Hpcl {
 
@@ -74,7 +75,7 @@ class ServerSocket {
         SignalClientConnected m_signal_client_connected;
         std::shared_ptr<std::thread> m_listen_thread;
         SocketFactoryPtr m_factory;
-        Notifier m_event_notifier;
+        std::shared_ptr<Notifier> m_event_notifier;
         std::mutex m_client_remote_disconnect_mutex;
         std::mutex m_client_mutex;
         std::condition_variable m_all_clients_disconnected;
@@ -82,6 +83,7 @@ class ServerSocket {
         std::vector<SocketPtr> m_disconnected_clients;
 };
 
+typedef ServerSocket::Pointer ServerSocketPtr;
 
 } //namespace Hpcl
 

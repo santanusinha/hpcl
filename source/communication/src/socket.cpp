@@ -23,6 +23,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "buffer.h"
+#include "notifier.h"
 #include "print.h"
 #include "socket.h"
 #include "syscall_error.h"
@@ -74,7 +76,7 @@ void
 Socket::shutdown() {
     if( !m_receiver_thread )
         return;
-    m_event_notifier.notify( SocketEvents::SHUTDOWN_REQUEST );
+    m_event_notifier->notify( SocketEvents::SHUTDOWN_REQUEST );
     m_receiver_thread->join();
     if( -1 == ::shutdown( m_socket, SHUT_RDWR ) )
     {
@@ -103,7 +105,7 @@ Socket::Socket(int32_t in_connection_fd )
     m_signal_shutdown(),
     m_signal_remote_disconnect(),
     m_receiver_thread(),
-    m_event_notifier(),
+    m_event_notifier(std::make_shared<Notifier>()),
     m_error(),
     m_is_connected() {
 }
@@ -132,7 +134,7 @@ Socket::on_remote_disconnect( const SocketPtr &in_this ) {
 
 void
 Socket::start_listening() {
-    m_event_notifier.init();
+    m_event_notifier->init();
     m_receiver_thread
         = std::shared_ptr<std::thread>(
                 new std::thread( boost::bind( std::mem_fn(
@@ -145,14 +147,16 @@ Socket::wait_for_data( std::exception_ptr &out_error ) {
     m_is_connected.store(true);
     try {
         ssize_t received = 0;
+        int32_t receivedError = 0;
         do
         {
+            receivedError = 0;
             char recv_buf[BUFSIZ];
             fd_set waitFDs;
             FD_ZERO(&waitFDs);
-            FD_SET( m_event_notifier.get_wait_fd(), &waitFDs );
+            FD_SET( m_event_notifier->get_wait_fd(), &waitFDs );
             FD_SET( m_socket, &waitFDs );
-            int32_t maxFD = std::max( m_event_notifier.get_wait_fd(),
+            int32_t maxFD = std::max( m_event_notifier->get_wait_fd(),
                                                             m_socket );
             if( -1 == select( maxFD + 1, &waitFDs, NULL, NULL, NULL) )
             {
@@ -160,19 +164,29 @@ Socket::wait_for_data( std::exception_ptr &out_error ) {
                             << boost::errinfo_api_function("select");
             }
             if( SocketEvents::SHUTDOWN_REQUEST
-                            == m_event_notifier.get_event_type() )
+                            == m_event_notifier->get_event_type() )
             {
                 hpcl_debug("Client socket shutdown requested\n");
                 return;
             }
-            if( ( received = recv( m_socket, recv_buf, BUFSIZ, 0 ) ) < 0 )
+            Buffer buffer;
+            while( ( received = recv( m_socket, recv_buf, BUFSIZ, 0 ) )
+                        > 0 )
+            {
+                void *p_memory = buffer.get_memory(received);
+                ::memcpy( p_memory, recv_buf, received );
+            }
+            receivedError = errno;
+            if( received < 0 && EAGAIN != errno )
             {
                 throw SyscallError() << boost::errinfo_errno(errno)
                             << boost::errinfo_api_function("recv");
             }
-            if( received > 0 )
+            else if( buffer.get_size() > 0 )
             {
-                MemInfo info( recv_buf, received );
+                MemInfo info(
+                        reinterpret_cast<char *>(buffer.get_buffer()),
+                        buffer.get_size() );
                 try
                 {
                     m_signal_data_received( shared_from_this(), info );
@@ -187,7 +201,7 @@ Socket::wait_for_data( std::exception_ptr &out_error ) {
                 //shutdown called
             }
         }
-        while( received > 0 );
+        while( received > 0 || receivedError == EAGAIN );
         m_is_connected.store(false);
         m_signal_remote_disconnect( shared_from_this() );
         on_remote_disconnect( shared_from_this() );

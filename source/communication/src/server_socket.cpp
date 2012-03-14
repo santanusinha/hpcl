@@ -25,7 +25,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <unistd.h>
+#include <fcntl.h>
 
+#include "notifier.h"
 #include "print.h"
 #include "server_socket.h"
 #include "syscall_error.h"
@@ -47,7 +50,7 @@ ServerSocket::ServerSocket( const SocketFactoryPtr &in_factory )
     m_signal_client_connected(),
     m_listen_thread(),
     m_factory( in_factory ),
-    m_event_notifier(),
+    m_event_notifier(std::make_shared<Notifier>()),
     m_client_remote_disconnect_mutex(),
     m_client_mutex(),
     m_all_clients_disconnected(),
@@ -68,7 +71,7 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
     m_port = in_port;
     out_error = std::exception_ptr();
     try {
-        m_event_notifier.init();
+        m_event_notifier->init();
         if( ( m_server_fd = socket(
                             PF_INET, SOCK_STREAM, IPPROTO_TCP ) ) < 0 ) {
             throw SyscallError() <<boost::errinfo_errno(errno)
@@ -105,16 +108,16 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
             int32_t client_sock = 0;
             fd_set waitFDs;
             FD_ZERO(&waitFDs);
-            FD_SET( m_event_notifier.get_wait_fd(), &waitFDs );
+            FD_SET( m_event_notifier->get_wait_fd(), &waitFDs );
             FD_SET( m_server_fd, &waitFDs );
-            int32_t maxFD = std::max( m_event_notifier.get_wait_fd(),
+            int32_t maxFD = std::max( m_event_notifier->get_wait_fd(),
                                         m_server_fd );
             if( -1 == select( maxFD + 1, &waitFDs, NULL, NULL, NULL) )
             {
                 throw SyscallError() << boost::errinfo_errno(errno)
                             << boost::errinfo_api_function("select");
             }
-            switch( m_event_notifier.get_event_type() )
+            switch( m_event_notifier->get_event_type() )
             {
                 case ServerSocketEvent::SHUTDOWN_REQUEST:
                 {
@@ -158,7 +161,7 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
                     for( auto & client : m_disconnected_clients ) {
                         client->shutdown();
                     }
-                    m_event_notifier.acknowledge();
+                    m_event_notifier->acknowledge();
                     hpcl_debug("Disconnected clients shut down requested\n");
                     continue;
                 }
@@ -168,6 +171,12 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
             {
                 throw SyscallError() << boost::errinfo_errno(errno)
                             << boost::errinfo_api_function("accept");
+            }
+            int32_t flags = fcntl(client_sock, F_GETFL, 0);
+            if( -1 == fcntl(client_sock, F_SETFL, flags | O_NONBLOCK) )
+            {
+                throw SyscallError() <<boost::errinfo_errno(errno)
+                                << boost::errinfo_api_function("fcntl");
             }
             SocketPtr client= m_factory->create_on_server(client_sock);
             {
@@ -195,7 +204,7 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
 
 void
 ServerSocket::shutdown() {
-    m_event_notifier.notify( ServerSocketEvent::SHUTDOWN_REQUEST );
+    m_event_notifier->notify( ServerSocketEvent::SHUTDOWN_REQUEST );
 }
 
 void
@@ -221,9 +230,9 @@ ServerSocket::client_remote_stop( const SocketPtr &in_stopped_socket ) {
     std::unique_lock<std::mutex> l( m_client_remote_disconnect_mutex );
     m_disconnected_clients.push_back( in_stopped_socket );
     hpcl_debug("Remote disconnect called");
-    if( !m_event_notifier.get_event_type() )
+    if( !m_event_notifier->get_event_type() )
     {
-        m_event_notifier.notify(
+        m_event_notifier->notify(
                     ServerSocketEvent::CLIENT_SOCKET_SHUTDOWN_REQUEST );
     }
 }

@@ -26,6 +26,9 @@ source/common/src/Makefile
 source/communication/Makefile
 source/communication/include/Makefile
 source/communication/src/Makefile
+source/remote-exec/Makefile
+source/remote-exec/include/Makefile
+source/remote-exec/src/Makefile
 ])
 
 AC_OUTPUT

@@ -86,11 +86,11 @@ handle_child_process( const ChildProcessPtr &in_child ) {
 
 int main()
 try {
-    std::shared_ptr<ExecServer> server = std::make_shared<ExecServer>();
-    server->signal_child_started().connect( handle_child_process );
+    ExecServer server;
+    server.signal_child_started().connect( handle_child_process );
     SocketFactoryPtr factory
                         = std::make_shared<SocketFactory>();
-    server->start( factory, 1025 );
+    server.start( factory, 1025 );
     return 0;
 }
 catch( boost::exception &error ) {

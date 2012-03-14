@@ -28,7 +28,7 @@ void
 hpcl_debug( const char *in_fmt, ... );
 
 void
-hpcl_print( const char *in_fmt, ... );
+hpcl_error( const char *in_fmt, ... );
 
 } //namespace Hpcl
 

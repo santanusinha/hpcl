@@ -54,7 +54,7 @@ hpcl_debug( const char *in_fmt, ... ) {
 }
 
 void
-hpcl_print( const char *in_fmt, ... ) {
+hpcl_error( const char *in_fmt, ... ) {
     va_list args;
     va_start( args, in_fmt );
     print("HPCL::ERROR::", in_fmt, args );

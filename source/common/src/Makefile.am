@@ -1,6 +1,7 @@
 lib_LTLIBRARIES = libhpcl-common.la
 
 libhpcl_common_la_SOURCES = \
+                buffer.cpp \
 				print.cpp \
                 notifier.cpp
 

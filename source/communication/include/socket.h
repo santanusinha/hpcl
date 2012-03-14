@@ -19,6 +19,7 @@
 #ifndef HPCL_SOCKET_H
 #define HPCL_SOCKET_H
 
+#include <atomic>
 #include <exception>
 #include <memory>
 #include <thread>
@@ -26,8 +27,8 @@
 #include <boost/signals2.hpp>
 
 #include "meminfo.h"
-#include "notifier.h"
 
+namespace Hpcl { class Notifier; }
 namespace Hpcl { class SocketFactory; }
 
 namespace Hpcl {
@@ -90,7 +91,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
         SignalShutdown m_signal_shutdown;
         SignalRemoteDisconnect m_signal_remote_disconnect;
         std::shared_ptr<std::thread> m_receiver_thread;
-        Notifier m_event_notifier;
+        std::shared_ptr<Notifier> m_event_notifier;
         std::exception_ptr m_error;
         std::atomic<bool> m_is_connected;
 };

@@ -23,6 +23,8 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "socket_factory.h"
 #include "syscall_error.h"
@@ -60,6 +62,12 @@ SocketFactory::create_on_client(
                 sizeof(server_info)) < 0) {
         throw SyscallError() << boost::errinfo_errno(errno)
                             <<boost::errinfo_api_function("connect");
+    }
+    int32_t flags = fcntl(client_socket, F_GETFL, 0);
+    if( fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) )
+    {
+        throw SyscallError() <<boost::errinfo_errno(errno)
+                        << boost::errinfo_api_function("fcntl");
     }
     SocketPtr new_socket = create_new_socket( client_socket );
     new_socket->start_listening();
