@@ -17,6 +17,7 @@
  */
 
 #include "child_process.h"
+#include "local_communicator.h"
 #include "print.h"
 
 namespace Hpcl {

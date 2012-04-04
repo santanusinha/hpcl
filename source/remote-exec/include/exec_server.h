@@ -5,15 +5,21 @@
 #include <exception>
 #include <queue>
 #include <memory>
+#include <thread>
 #include <set>
 
-#include "child_process.h"
-#include "local_communicator.h"
-#include "server_socket.h"
+#include <boost/signals2.hpp>
+
+#include "communication_pointer_types.h"
+#include "meminfo.h"
+#include "remote_exec_pointer_types.h"
+#include "remote_exec_component_factory.h"
 
 namespace Hpcl {
 
-class ExecServer : public std::enable_shared_from_this<ExecServer> {
+class ExecServer {
+    friend class RemoteExecComponentFactory;
+
     public:
         typedef std::shared_ptr<ExecServer> Pointer;
         typedef std::weak_ptr<ExecServer> WeakPointer;
@@ -23,7 +29,6 @@ class ExecServer : public std::enable_shared_from_this<ExecServer> {
         typedef boost::signals2::signal<
                     void(pid_t,int32_t)> SignalChildCompleted;
 
-        ExecServer();
         virtual ~ExecServer();
 
         ExecServer(const ExecServer &) = delete;
@@ -31,7 +36,7 @@ class ExecServer : public std::enable_shared_from_this<ExecServer> {
         operator = (const ExecServer &) = delete;
 
         void
-        start(const SocketFactoryPtr &in_factory, int32_t in_port);
+        start( int32_t in_port);
 
         void
         stop();
@@ -43,6 +48,10 @@ class ExecServer : public std::enable_shared_from_this<ExecServer> {
         signal_child_completed();
 
     protected:
+        explicit
+        ExecServer( const RemoteExecComponentFactoryPtr &in_factory,
+                    const SocketFactoryPtr &in_socket_factory );
+
         virtual void
         on_child_start_request( const std::string &in_cmd );
 
@@ -60,7 +69,7 @@ class ExecServer : public std::enable_shared_from_this<ExecServer> {
                                     const MemInfo &in_cmd);
 
         void
-        on_client_connected( const SocketPtr &in_client );
+        on_client_created( const SocketPtr &in_client );
 
         void
         on_client_remote_disconnect( const SocketPtr &in_client );
@@ -75,6 +84,8 @@ class ExecServer : public std::enable_shared_from_this<ExecServer> {
         //void
         //join_thread();
 
+        RemoteExecComponentFactoryPtr m_factory;
+        SocketFactoryPtr m_socket_factory;
         ServerSocketPtr m_server;
 
         //std::mutex m_exit_mutex;
@@ -86,9 +97,6 @@ class ExecServer : public std::enable_shared_from_this<ExecServer> {
         SignalChildStarted m_signal_child_started;
         SignalChildCompleted m_signal_child_completed;
 };
-
-typedef ExecServer::Pointer ExecServerPtr;
-typedef ExecServer::WeakPointer ExecServerWeakPtr;
 
 } //namespace Hpcl
 #endif //HPCL_EXECSERVER_H

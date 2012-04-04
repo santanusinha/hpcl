@@ -192,6 +192,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 include_HEADERS = \
+                common_pointer_types.h \
                 print.h \
                 error_id.h \
                 semantic_error.h \

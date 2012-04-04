@@ -28,24 +28,29 @@
 
 #include <boost/signals2.hpp>
 
-#include "socket.h"
-#include "socket_factory.h"
+#include "communication_pointer_types.h"
 
 namespace Hpcl { class Notifier; }
 
 namespace Hpcl {
 
 class ServerSocket {
+    friend class SocketFactory;
+
     public:
-        typedef std::set<SocketPtr> Clients;
         typedef std::shared_ptr<ServerSocket> Pointer;
         typedef std::weak_ptr<ServerSocket> WeakPointer;
 
         typedef boost::signals2::signal<
+                    void(const SocketPtr &)> SignalClientCreated;
+
+        typedef boost::signals2::signal<
                     void(const SocketPtr &)> SignalClientConnected;
 
-        ServerSocket( const SocketFactoryPtr &in_factory );
         virtual ~ServerSocket();
+
+        SignalClientConnected &
+        signal_client_created(); 
 
         SignalClientConnected &
         signal_client_connected(); 
@@ -57,6 +62,11 @@ class ServerSocket {
         shutdown();
 
     protected:
+        ServerSocket( const SocketFactoryPtr &in_factory );
+        
+        virtual void
+        on_client_created( const SocketPtr &in_client );
+
         virtual void
         on_client_connected( const SocketPtr &in_client );
 
@@ -70,8 +80,25 @@ class ServerSocket {
         void
         client_remote_stop( const SocketPtr &in_stopped_socket );
 
+        struct ClientConnectionInfo {
+            boost::signals2::connection m_shutdown_connection;
+            boost::signals2::connection m_remote_shutdown_connection;
+
+            ClientConnectionInfo();
+
+            ClientConnectionInfo( const ClientConnectionInfo &) = default;
+
+            ClientConnectionInfo &
+            operator = ( const ClientConnectionInfo &) = default;
+
+            ~ClientConnectionInfo() = default;
+        };
+
+        typedef std::map<SocketPtr, ClientConnectionInfo> Clients;
+
         int32_t m_server_fd;
         int32_t m_port;
+        SignalClientCreated m_signal_client_created;
         SignalClientConnected m_signal_client_connected;
         std::shared_ptr<std::thread> m_listen_thread;
         SocketFactoryPtr m_factory;
@@ -83,7 +110,6 @@ class ServerSocket {
         std::vector<SocketPtr> m_disconnected_clients;
 };
 
-typedef ServerSocket::Pointer ServerSocketPtr;
 
 } //namespace Hpcl
 

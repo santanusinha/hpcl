@@ -14870,7 +14870,7 @@ else
 fi
 
 
-ac_config_files="$ac_config_files Makefile source/Makefile source/common/Makefile source/common/include/Makefile source/common/src/Makefile source/communication/Makefile source/communication/include/Makefile source/communication/src/Makefile source/remote-exec/Makefile source/remote-exec/include/Makefile source/remote-exec/src/Makefile"
+ac_config_files="$ac_config_files Makefile source/Makefile source/common/Makefile source/common/include/Makefile source/common/src/Makefile source/communication/Makefile source/communication/include/Makefile source/communication/src/Makefile source/remote-exec/Makefile source/remote-exec/include/Makefile source/remote-exec/src/Makefile source/messaging/Makefile source/messaging/include/Makefile source/messaging/src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -15997,6 +15997,9 @@ do
     "source/remote-exec/Makefile") CONFIG_FILES="$CONFIG_FILES source/remote-exec/Makefile" ;;
     "source/remote-exec/include/Makefile") CONFIG_FILES="$CONFIG_FILES source/remote-exec/include/Makefile" ;;
     "source/remote-exec/src/Makefile") CONFIG_FILES="$CONFIG_FILES source/remote-exec/src/Makefile" ;;
+    "source/messaging/Makefile") CONFIG_FILES="$CONFIG_FILES source/messaging/Makefile" ;;
+    "source/messaging/include/Makefile") CONFIG_FILES="$CONFIG_FILES source/messaging/include/Makefile" ;;
+    "source/messaging/src/Makefile") CONFIG_FILES="$CONFIG_FILES source/messaging/src/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

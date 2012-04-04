@@ -1,6 +1,7 @@
 #include <iostream>
 #include <thread>
-#include "exec_client.h"
+#include "remote_process.h"
+#include "remote_exec_component_factory.h"
 
 using namespace Hpcl;
 
@@ -16,13 +17,13 @@ completed(int32_t) {
 }
 
 int main() {
-    SocketFactoryPtr factory
-                        = std::make_shared<SocketFactory>();
-    std::shared_ptr<ExecClient> client = std::make_shared<ExecClient>(
-                                                                factory );
-    client->signal_process_completed().connect( boost::bind(
-                                                        completed, _1 ) );
+    RemoteExecComponentFactoryPtr factory
+                = RemoteExecComponentFactory::create_factory();
+    RemoteProcessPtr client = factory->create_client();
+    client->signal_process_completed().connect(
+                        boost::bind( completed, _1 ) );
     std::string cmd;
+    client->connect("127.0.0.1",1025);
     while(true)
     {
         std::cout<<"cmd? ";
@@ -30,10 +31,7 @@ int main() {
         if( "QUIT" == cmd ) {
             break;
         }
-        client->execute("127.0.0.1",1025, cmd);
-    }
-
-    {
+        client->execute(cmd);
         std::unique_lock<std::mutex> l( g_complete_mutex );
         while( !g_completed )
         {

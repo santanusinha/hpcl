@@ -1,7 +1,9 @@
 include_HEADERS = \
+            remote_exec_pointer_types.h \
             child_process.h \
-            exec_client.h \
-            exec_server.h
+            remote_process.h \
+            exec_server.h \
+            remote_exec_component_factory.h
 
 noinst_HEADERS = \
             exec_message.h

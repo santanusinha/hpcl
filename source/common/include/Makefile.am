@@ -1,4 +1,5 @@
 include_HEADERS = \
+                common_pointer_types.h \
                 print.h \
                 error_id.h \
                 semantic_error.h \

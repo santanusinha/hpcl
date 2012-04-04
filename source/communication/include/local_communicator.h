@@ -25,6 +25,7 @@
 
 #include <boost/exception/all.hpp>
 
+#include "communication_pointer_types.h"
 #include "meminfo.h"
 
 namespace Hpcl {
@@ -71,9 +72,6 @@ class LocalCommunicator {
         int32_t m_data_id;
         char *m_memory;
 };
-
-typedef LocalCommunicator::Pointer LocalCommunicatorPtr;
-typedef LocalCommunicator::WeakPointer LocalCommunicatorWeakPtr;
 
 } //namespace Hpcl
 

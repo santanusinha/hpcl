@@ -6,6 +6,9 @@
 #include <sys/select.h>
 #include <sys/ioctl.h>
 #include "exec_server.h"
+#include "child_process.h"
+#include "remote_exec_component_factory.h"
+#include "syscall_error.h"
 
 bool
 is_closed(int fd) {
@@ -86,11 +89,11 @@ handle_child_process( const ChildProcessPtr &in_child ) {
 
 int main()
 try {
-    ExecServer server;
-    server.signal_child_started().connect( handle_child_process );
-    SocketFactoryPtr factory
-                        = std::make_shared<SocketFactory>();
-    server.start( factory, 1025 );
+    RemoteExecComponentFactoryPtr factory
+                = RemoteExecComponentFactory::create_factory();
+    ExecServerPtr server = factory->create_server();
+    server->signal_child_started().connect( handle_child_process );
+    server->start( 1025 );
     return 0;
 }
 catch( boost::exception &error ) {

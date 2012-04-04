@@ -68,8 +68,8 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libhpcl_remote_exec_la_LIBADD =
-am_libhpcl_remote_exec_la_OBJECTS = child_process.lo exec_client.lo \
-	exec_server.lo
+am_libhpcl_remote_exec_la_OBJECTS = child_process.lo remote_process.lo \
+	exec_server.lo remote_exec_component_factory.lo
 libhpcl_remote_exec_la_OBJECTS = $(am_libhpcl_remote_exec_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/./config/depcomp
@@ -210,8 +210,9 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libhpcl-remote-exec.la
 libhpcl_remote_exec_la_SOURCES = \
                 child_process.cpp \
-                exec_client.cpp \
-                exec_server.cpp
+                remote_process.cpp \
+                exec_server.cpp \
+                remote_exec_component_factory.cpp
 
 AM_CXXFLAGS = -Wall -Wextra -Weffc++ -std=c++0x
 INCLUDES = -I$(top_srcdir)/source/common/include/ \
@@ -294,8 +295,9 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/child_process.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exec_client.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exec_server.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remote_exec_component_factory.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remote_process.Plo@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

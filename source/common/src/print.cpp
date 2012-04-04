@@ -48,7 +48,9 @@ void
 hpcl_debug( const char *in_fmt, ... ) {
     va_list args;
     va_start( args, in_fmt );
+#ifdef DEBUG
     print("HPCL::DEBUG::", in_fmt, args );
+#endif //DEBUG
     va_end(args);
     return;
 }

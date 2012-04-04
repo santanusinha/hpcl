@@ -20,63 +20,42 @@
 #include "config.h"
 #endif
 
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <fcntl.h>
-
+#include "server_socket.h"
+#include "socket.h"
 #include "socket_factory.h"
 #include "syscall_error.h"
 
 namespace Hpcl {
-SocketFactory::SocketFactory() {
+SocketFactory::SocketFactory()
+    :enable_shared_from_this() {
 }
 
 SocketFactory::~SocketFactory() {
 }
 
-SocketPtr
-SocketFactory::create_on_server( int32_t in_connection_fd ) {
-    SocketPtr new_socket = create_new_socket( in_connection_fd );
-    new_socket->start_listening();
-    return new_socket;
+SocketFactoryPtr
+SocketFactory::create_factory() {
+    return SocketFactoryPtr( new SocketFactory() );
+}
+
+ServerSocketPtr
+SocketFactory::create_server() {
+    return create_new_server_socket();
 }
 
 SocketPtr
-SocketFactory::create_on_client(
-                    const std::string &in_server, int32_t in_port ) {
-    int32_t client_socket = 0;
-    if ((client_socket = socket(
-                            PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        throw SyscallError() << boost::errinfo_errno(errno)
-                            <<boost::errinfo_api_function("socket");
-    } 
-    struct sockaddr_in server_info;
-    memset(&server_info, 0, sizeof(server_info));
-    server_info.sin_family = PF_INET;
-    server_info.sin_addr.s_addr = inet_addr( in_server.c_str() );
-    server_info.sin_port = htons(in_port);
-    /* Establish connection */
-    if (::connect(client_socket, (struct sockaddr *) &server_info,
-                sizeof(server_info)) < 0) {
-        throw SyscallError() << boost::errinfo_errno(errno)
-                            <<boost::errinfo_api_function("connect");
-    }
-    int32_t flags = fcntl(client_socket, F_GETFL, 0);
-    if( fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) )
-    {
-        throw SyscallError() <<boost::errinfo_errno(errno)
-                        << boost::errinfo_api_function("fcntl");
-    }
-    SocketPtr new_socket = create_new_socket( client_socket );
-    new_socket->start_listening();
-    return new_socket;
+SocketFactory::create_client() {
+    return create_new_socket();
+}
+
+ServerSocketPtr
+SocketFactory::create_new_server_socket() {
+    return ServerSocketPtr( new ServerSocket( shared_from_this() ) );
 }
 
 SocketPtr
-SocketFactory::create_new_socket( int32_t in_connection_fd ) {
-    return SocketPtr( new Socket( in_connection_fd ) );
+SocketFactory::create_new_socket() {
+    return SocketPtr( new Socket() );
 }
 
 } //namespace Hpcl

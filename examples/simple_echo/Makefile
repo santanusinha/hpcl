@@ -1,6 +1,6 @@
 
 CPPFLAGS += -I $(HPCL_BASE)/include
-CXXFLAGS += -Wall -Wextra -Weffc++ -std=c++0x -pthread 
+CXXFLAGS += -Wall -Wextra -Weffc++ -std=c++0x -pthread -g3 -O0
 
 LDFLAGS += -L $(HPCL_BASE)/lib \
            -lhpcl-communication \

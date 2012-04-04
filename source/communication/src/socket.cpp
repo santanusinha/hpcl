@@ -20,8 +20,12 @@
 #include "config.h"
 #endif
 
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 
 #include "buffer.h"
 #include "notifier.h"
@@ -53,6 +57,46 @@ Socket::signal_remote_disconnect() {
     return m_signal_remote_disconnect;
 }
 
+void
+Socket::connect_to_server(
+                    const std::string &in_server, int32_t in_port ) {
+    int32_t client_socket = 0;
+    if ((client_socket = socket(
+                            PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+        throw SyscallError() << boost::errinfo_errno(errno)
+                            <<boost::errinfo_api_function("socket");
+    } 
+    struct sockaddr_in server_info;
+    memset(&server_info, 0, sizeof(server_info));
+    server_info.sin_family = PF_INET;
+    server_info.sin_addr.s_addr = inet_addr( in_server.c_str() );
+    server_info.sin_port = htons(in_port);
+    /* Establish connection */
+    if (::connect(client_socket, (struct sockaddr *) &server_info,
+                sizeof(server_info)) < 0) {
+        throw SyscallError() << boost::errinfo_errno(errno)
+                            <<boost::errinfo_api_function("connect");
+    }
+    int32_t flags = fcntl(client_socket, F_GETFL, 0);
+    if( fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) )
+    {
+        throw SyscallError() <<boost::errinfo_errno(errno)
+                        << boost::errinfo_api_function("fcntl");
+    }
+    start( client_socket );
+    return;
+}
+
+void
+Socket::start(int32_t in_connection_fd) {
+    m_socket = in_connection_fd;
+    m_event_notifier->init();
+    m_receiver_thread
+        = std::shared_ptr<std::thread>(
+                new std::thread( boost::bind( std::mem_fn(
+                                &Socket::wait_for_data), this, m_error)));
+}
+
 bool
 Socket::get_is_connected() const {
     return m_is_connected.load();
@@ -78,10 +122,11 @@ Socket::shutdown() {
         return;
     m_event_notifier->notify( SocketEvents::SHUTDOWN_REQUEST );
     m_receiver_thread->join();
+    hpcl_debug("Thread stopped\n");
     if( -1 == ::shutdown( m_socket, SHUT_RDWR ) )
     {
-        throw SyscallError() << boost::errinfo_errno(errno)
-                            << boost::errinfo_api_function("shutdown");
+//        throw SyscallError() << boost::errinfo_errno(errno)
+//                            << boost::errinfo_api_function("shutdown");
     }
     if( -1 == ::close( m_socket ) )
     {
@@ -98,9 +143,9 @@ Socket::shutdown() {
     }
 }
 
-Socket::Socket(int32_t in_connection_fd )
+Socket::Socket()
     :enable_shared_from_this<Socket>(),
-    m_socket( in_connection_fd ),
+    m_socket(),
     m_signal_data_received(),
     m_signal_shutdown(),
     m_signal_remote_disconnect(),
@@ -108,6 +153,7 @@ Socket::Socket(int32_t in_connection_fd )
     m_event_notifier(std::make_shared<Notifier>()),
     m_error(),
     m_is_connected() {
+        m_is_connected.store(false);
 }
 
 Socket::~Socket() {
@@ -133,15 +179,6 @@ Socket::on_remote_disconnect( const SocketPtr &in_this ) {
 }
 
 void
-Socket::start_listening() {
-    m_event_notifier->init();
-    m_receiver_thread
-        = std::shared_ptr<std::thread>(
-                new std::thread( boost::bind( std::mem_fn(
-                                &Socket::wait_for_data), this, m_error)));
-}
-
-void
 Socket::wait_for_data( std::exception_ptr &out_error ) {
     out_error = std::exception_ptr();
     m_is_connected.store(true);
@@ -156,9 +193,7 @@ Socket::wait_for_data( std::exception_ptr &out_error ) {
             FD_ZERO(&waitFDs);
             FD_SET( m_event_notifier->get_wait_fd(), &waitFDs );
             FD_SET( m_socket, &waitFDs );
-            int32_t maxFD = std::max( m_event_notifier->get_wait_fd(),
-                                                            m_socket );
-            if( -1 == select( maxFD + 1, &waitFDs, NULL, NULL, NULL) )
+            if( -1 == select( FD_SETSIZE, &waitFDs, NULL, NULL, NULL) )
             {
                 throw SyscallError() << boost::errinfo_errno(errno)
                             << boost::errinfo_api_function("select");
@@ -176,6 +211,7 @@ Socket::wait_for_data( std::exception_ptr &out_error ) {
                 void *p_memory = buffer.get_memory(received);
                 ::memcpy( p_memory, recv_buf, received );
             }
+//            std::cout<<"Received: "<<buffer.get_size()<<std::endl;
             receivedError = errno;
             if( received < 0 && EAGAIN != errno )
             {
@@ -199,6 +235,7 @@ Socket::wait_for_data( std::exception_ptr &out_error ) {
             else
             {
                 //shutdown called
+                break;
             }
         }
         while( received > 0 || receivedError == EAGAIN );

@@ -30,6 +30,8 @@
 
 #include "notifier.h"
 #include "print.h"
+#include "socket.h"
+#include "socket_factory.h"
 #include "server_socket.h"
 #include "syscall_error.h"
 
@@ -47,6 +49,7 @@ namespace Hpcl {
 ServerSocket::ServerSocket( const SocketFactoryPtr &in_factory )
     :m_server_fd(),
     m_port(),
+    m_signal_client_created(),
     m_signal_client_connected(),
     m_listen_thread(),
     m_factory( in_factory ),
@@ -59,6 +62,16 @@ ServerSocket::ServerSocket( const SocketFactoryPtr &in_factory )
 }
 
 ServerSocket::~ServerSocket() {
+}
+
+ServerSocket::ClientConnectionInfo::ClientConnectionInfo()
+    :m_shutdown_connection(),
+    m_remote_shutdown_connection() {
+}
+
+ServerSocket::SignalClientConnected &
+ServerSocket::signal_client_created() {
+    return m_signal_client_created;
 }
 
 ServerSocket::SignalClientConnected &
@@ -110,32 +123,35 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
             FD_ZERO(&waitFDs);
             FD_SET( m_event_notifier->get_wait_fd(), &waitFDs );
             FD_SET( m_server_fd, &waitFDs );
-            int32_t maxFD = std::max( m_event_notifier->get_wait_fd(),
-                                        m_server_fd );
-            if( -1 == select( maxFD + 1, &waitFDs, NULL, NULL, NULL) )
+            if( -1 == select( FD_SETSIZE, &waitFDs, NULL, NULL, NULL) )
             {
                 throw SyscallError() << boost::errinfo_errno(errno)
                             << boost::errinfo_api_function("select");
             }
+            {
+            std::unique_lock<std::mutex> l( m_client_mutex );
             switch( m_event_notifier->get_event_type() )
             {
                 case ServerSocketEvent::SHUTDOWN_REQUEST:
                 {
-                    std::vector<SocketPtr> connected;
+                    hpcl_debug("Server socket shutdown started\n");
+                    std::vector<std::pair<SocketPtr,ClientConnectionInfo>> connected;
                     {
-                        std::unique_lock<std::mutex> l( m_client_mutex );
                         copy( m_clients.begin(), m_clients.end(),
                                     back_inserter(connected));
                     }
                     for( auto& client: connected )
                     {
-                        client->shutdown();
+                        SocketPtr socket = client.first;
+                        ClientConnectionInfo info = client.second;
+                        info.m_shutdown_connection.disconnect();
+                        socket->shutdown();
+                        m_clients.erase( client.first );
                     }
-                    std::unique_lock<std::mutex> l( m_client_mutex );
-                    while( !m_clients.empty() )
-                    {
-                        m_all_clients_disconnected.wait(l);
-                    }
+//                    while( !m_clients.empty() )
+//                    {
+//                        m_all_clients_disconnected.wait(l);
+//                    }
                     connected.clear();
                     hpcl_debug("All clients exited\n");
                     if( -1 == ::shutdown( m_server_fd, SHUT_RDWR ) )
@@ -156,15 +172,18 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
                 }
                 case ServerSocketEvent::CLIENT_SOCKET_SHUTDOWN_REQUEST:
                 {
-                    std::unique_lock<std::mutex> l(
-                                        m_client_remote_disconnect_mutex);
                     for( auto & client : m_disconnected_clients ) {
+                        auto info = m_clients.find( client );
+                        (*info).second.m_shutdown_connection.disconnect();
                         client->shutdown();
+                        m_clients.erase( client );
                     }
+                    m_disconnected_clients.clear();
                     m_event_notifier->acknowledge();
                     hpcl_debug("Disconnected clients shut down requested\n");
                     continue;
                 }
+            }
             }
             if( (client_sock = accept( m_server_fd,
                             (struct sockaddr *)&client_info, &len )) < 0 )
@@ -178,19 +197,25 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
                 throw SyscallError() <<boost::errinfo_errno(errno)
                                 << boost::errinfo_api_function("fcntl");
             }
-            SocketPtr client= m_factory->create_on_server(client_sock);
+            SocketPtr client= m_factory->create_client();
             {
                 std::unique_lock<std::mutex> l( m_client_mutex );
-                m_clients.insert( client );
-            }
-            client->signal_shutdown().connect( boost::bind(
+                ClientConnectionInfo info;
+                info.m_shutdown_connection
+                    = client->signal_shutdown().connect( boost::bind(
                                 std::mem_fn( &ServerSocket::client_stop ),
                                 this, _1 ));
-            client->signal_remote_disconnect().connect( boost::bind(
+                info.m_remote_shutdown_connection
+                    = client->signal_remote_disconnect().connect( boost::bind(
                         std::mem_fn( &ServerSocket::client_remote_stop),
                         this, _1 ));
-            m_signal_client_connected( client );
+                m_clients.insert( std::make_pair(client,info) );
+            }
+            on_client_created( client );
+            m_signal_client_created( client );
+            client->start( client_sock );
             on_client_connected( client );
+            m_signal_client_connected( client );
         }
     }
     catch( ... )
@@ -201,10 +226,23 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
     m_server_fd = 0;
 }
 
-
 void
 ServerSocket::shutdown() {
+    std::lock_guard<std::mutex> l(m_client_mutex);
+    for( auto & client: m_clients ) {
+        SocketPtr socket = client.first;
+        ClientConnectionInfo info = client.second;
+        info.m_remote_shutdown_connection.disconnect();
+    }
     m_event_notifier->notify( ServerSocketEvent::SHUTDOWN_REQUEST );
+    hpcl_debug("Server socket shutdown requested\n");
+}
+
+void
+ServerSocket::on_client_created( const SocketPtr &in_client ) {
+    if(in_client) {
+    }
+    hpcl_debug("New client created");
 }
 
 void
@@ -219,15 +257,11 @@ ServerSocket::client_stop( const SocketPtr &in_stopped_socket ) {
     std::unique_lock<std::mutex> l( m_client_mutex );
     m_clients.erase( in_stopped_socket );
     hpcl_debug("Local disconnect called");
-    if( m_clients.empty() )
-    {
-        m_all_clients_disconnected.notify_one();
-    }
 }
 
 void
 ServerSocket::client_remote_stop( const SocketPtr &in_stopped_socket ) {
-    std::unique_lock<std::mutex> l( m_client_remote_disconnect_mutex );
+    std::unique_lock<std::mutex> l( m_client_mutex );
     m_disconnected_clients.push_back( in_stopped_socket );
     hpcl_debug("Remote disconnect called");
     if( !m_event_notifier->get_event_type() )

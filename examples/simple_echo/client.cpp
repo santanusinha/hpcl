@@ -34,10 +34,11 @@ send_data( const SocketPtr &in_socket, const std::string &in_msg ) {
 
 int main() 
 try {
-    SocketFactory factory;
-    SocketPtr socket = factory.create_on_client( "127.0.0.1", 1024 );
+    SocketFactoryPtr factory = SocketFactory::create_factory();
+    SocketPtr socket = factory->create_client();
     socket->signal_data_received().connect( handle_data );
     socket->signal_remote_disconnect().connect( handle_stop );
+    socket->connect_to_server( "127.0.0.1", 1024 );
     while( true )
     {
         {

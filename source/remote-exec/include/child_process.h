@@ -20,11 +20,12 @@
 #define HPCL_CHILD_PROCESS_H
 
 #include <sys/types.h>
-#include "local_communicator.h"
+#include "communication_pointer_types.h"
 
 namespace Hpcl {
 
 class ChildProcess {
+
     public:
         typedef std::shared_ptr<ChildProcess> Pointer;
         typedef std::weak_ptr<ChildProcess> WeakPointer;
@@ -80,8 +81,6 @@ class ChildProcess {
 
         friend class ExecServer;
 };
-
-typedef ChildProcess::Pointer ChildProcessPtr;
 
 } //namespace Hpcl
 

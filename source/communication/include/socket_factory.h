@@ -20,15 +20,17 @@
 #define HPCL_SERVER_FACTORY_H
 #include <memory>
 
-#include "socket.h"
+#include "communication_pointer_types.h"
 
 namespace Hpcl {
-class SocketFactory {
+class SocketFactory: public std::enable_shared_from_this<SocketFactory> {
     public:
         typedef std::shared_ptr<SocketFactory> Pointer;
         typedef std::weak_ptr<SocketFactory> WeakPointer;
 
-        SocketFactory();
+        static Pointer
+        create_factory();
+        
         virtual ~SocketFactory();
 
         SocketFactory( const SocketFactory & ) = delete;
@@ -36,19 +38,21 @@ class SocketFactory {
         SocketFactory &
         operator =( const SocketFactory & ) = delete;
 
-        SocketPtr
-        create_on_server( int32_t in_connection_fd );
+        ServerSocketPtr
+        create_server();
 
         SocketPtr
-        create_on_client( const std::string &in_server, int32_t port );
+        create_client();
 
     protected:
-        virtual SocketPtr
-        create_new_socket( int32_t in_connection_fd );
-};
+        SocketFactory();
 
-typedef SocketFactory::Pointer SocketFactoryPtr;
-typedef SocketFactory::WeakPointer SocketFactoryWeakPtr;
+        virtual ServerSocketPtr
+        create_new_server_socket();
+
+        virtual SocketPtr
+        create_new_socket();
+};
 
 } //namespace Hpcl
 

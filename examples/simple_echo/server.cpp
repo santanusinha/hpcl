@@ -38,7 +38,7 @@ class EchoServer : public ServerSocket {
 
     protected:
         void
-        on_client_connected( const SocketPtr &in_socket ) {
+        on_client_created( const SocketPtr &in_socket ) {
             std::cout<<"Got new client connection"<<std::endl;
             in_socket->signal_shutdown().connect(
                         boost::bind(
@@ -48,13 +48,13 @@ class EchoServer : public ServerSocket {
                         boost::bind(
                             std::mem_fn( &EchoServer::handle_client_request ),
                             this, _1, _2));
-
         }
 
 };
 
 int main() {
-    EchoServer server( SocketFactoryPtr( new SocketFactory() ) );
+    SocketFactoryPtr factory = SocketFactory::create_factory();
+    EchoServer server( factory );
     try
     {
         std::exception_ptr error;

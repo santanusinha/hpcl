@@ -1,4 +1,5 @@
 include_HEADERS = \
+                communication_pointer_types.h \
                 meminfo.h \
                 socket.h \
                 socket_factory.h \

@@ -26,6 +26,7 @@
 
 #include <boost/signals2.hpp>
 
+#include "communication_pointer_types.h"
 #include "meminfo.h"
 
 namespace Hpcl { class Notifier; }
@@ -35,6 +36,7 @@ namespace Hpcl {
 
 class Socket : public std::enable_shared_from_this<Socket> {
     friend class SocketFactory;
+    friend class ServerSocket;
 
     public:
         typedef std::shared_ptr<Socket> Pointer;
@@ -58,6 +60,12 @@ class Socket : public std::enable_shared_from_this<Socket> {
         SignalRemoteDisconnect &
         signal_remote_disconnect();
 
+        void
+        connect_to_server( const std::string &in_server, int32_t port );
+
+        void
+        listen();
+
         bool
         get_is_connected() const;
 
@@ -68,7 +76,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
         shutdown();    
 
     protected:
-        Socket(int32_t in_connection_fd );
+        Socket();
 
         virtual void
         on_data_received( const MemInfo &in_data );
@@ -81,7 +89,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
 
     private:
         void
-        start_listening();
+        start(int32_t in_connection_fd );
 
         void
         wait_for_data( std::exception_ptr &out_error );
@@ -95,9 +103,6 @@ class Socket : public std::enable_shared_from_this<Socket> {
         std::exception_ptr m_error;
         std::atomic<bool> m_is_connected;
 };
-
-typedef Socket::Pointer SocketPtr;
-typedef Socket::WeakPointer SocketWeakPtr;
 
 } //namespace Hpcl
 #endif //HPCL_SOCKET_H

@@ -26,9 +26,9 @@ namespace Hpcl {
 void *
 Buffer::get_memory( size_t in_size ) {
     if( nullptr == m_buffer
-            || m_current_size + in_size < m_alloc_size )
+            || m_current_size + in_size > m_alloc_size )
     {
-        while( m_current_size + in_size < m_alloc_size )
+        while( m_current_size + in_size > m_alloc_size )
         {
             m_alloc_size = m_alloc_size << 1;
         }

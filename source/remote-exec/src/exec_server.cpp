@@ -1,3 +1,25 @@
+/*
+ * Copyright (C) 2012 Santanu Sinha (santanu.sinha@gmail.com)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif //HAVE_CONFIG_H
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -7,10 +29,15 @@
 
 #include <boost/tokenizer.hpp>
 
+#include "child_process.h"
 #include "exec_server.h"
 #include "exec_message.h"
+#include "local_communicator.h"
 #include "print.h"
 #include "semantic_error.h"
+#include "server_socket.h"
+#include "socket.h"
+#include "socket_factory.h"
 #include "syscall_error.h"
 
 namespace {
@@ -40,8 +67,10 @@ parse_command(char *argv[], int64_t &in_num_args,
 
 namespace Hpcl {
 
-ExecServer::ExecServer()
-    :enable_shared_from_this(),
+ExecServer::ExecServer( const RemoteExecComponentFactoryPtr &in_factory,
+                        const SocketFactoryPtr &in_socket_factory )
+    :m_factory( in_factory ),
+    m_socket_factory( in_socket_factory ),
     m_server(),
     m_signal_child_started(),
     m_signal_child_completed() {
@@ -51,18 +80,11 @@ ExecServer::~ExecServer() {
 }
 
 void
-ExecServer::start( const SocketFactoryPtr &in_factory, int32_t in_port ) {
-    if( !in_factory ) {
-        throw SemanticError()
-            <<errinfo_errorid(ErrorID::SEMANTIC_ERR_INVALID_PARAMETER);
-    }
-    m_server = std::make_shared<ServerSocket>( in_factory );//TODO::FACTORY
-    m_server->signal_client_connected().connect( boost::bind(
-                        std::mem_fn( &ExecServer::on_client_connected ),
+ExecServer::start( int32_t in_port ) {
+    m_server = m_socket_factory->create_server();
+    m_server->signal_client_created().connect( boost::bind(
+                        std::mem_fn( &ExecServer::on_client_created),
                         this, _1 ));
-    m_server->signal_client_connected().connect( boost::bind(
-                std::mem_fn( &ExecServer::on_client_remote_disconnect),
-                this, _1 ));
     std::exception_ptr error;
     m_server->listen( in_port, error );
     if( error ) {
@@ -108,11 +130,15 @@ ExecServer::on_command_received( const SocketPtr &in_socket,
         hpcl_debug("Called with no data\n");
         return;
     }
-    const ExecMessage *msg = reinterpret_cast<const ExecMessage *>(
+    const ExecMessageHeader *header
+                = reinterpret_cast<const ExecMessageHeader *>(
                                                     in_cmd.get_data());
-    switch( msg->m_msg_type ) {
+    switch( header->m_msg_type ) {
         case ExecMessageCode::EXEC_COMMAND:
         {
+            const ExecMessage *msg
+                = reinterpret_cast<const ExecMessage *>(
+                                                in_cmd.get_data());
             std::string command = msg->m_command;
             hpcl_debug("Executing command: %s\n",command.c_str());
             handle_process_creation( command, in_socket );
@@ -125,6 +151,9 @@ ExecServer::on_command_received( const SocketPtr &in_socket,
         case ExecMessageCode::EXEC_DEBUG_COMMAND:
         {
             //TODO
+        }
+        default:
+        {
         }
     }
 }
@@ -186,8 +215,12 @@ ExecServer::handle_process_creation( const std::string &in_command,
         }
         default:
         {
+            ExecProcessStartedMessage start_msg(pid);
+            in_socket->send_data(
+                        MemInfo( reinterpret_cast<char *>(&start_msg),
+                                sizeof( ExecProcessStartedMessage ) ) );
             ChildProcessPtr child_process
-                                = std::make_shared<ChildProcess>();
+                            = std::make_shared<ChildProcess>();
             if( -1 == close( child_stdout[1] ) ) {
                 throw SyscallError() <<boost::errinfo_errno(errno)
                             << boost::errinfo_api_function("close");
@@ -222,6 +255,7 @@ ExecServer::handle_process_creation( const std::string &in_command,
             hpcl_debug("Sending status %d\n", status );
             if( in_socket ) {
                 ExecReplyMessage reply;
+                reply.m_pid = pid;
                 reply.m_status = status;
                 in_socket->send_data(
                                 MemInfo( reinterpret_cast<char *>(&reply),
@@ -236,11 +270,14 @@ ExecServer::handle_process_creation( const std::string &in_command,
 }
 
 void
-ExecServer::on_client_connected( const SocketPtr &in_client ) {
+ExecServer::on_client_created( const SocketPtr &in_client ) {
     if( in_client ) {
         in_client->signal_data_received().connect( boost::bind(
                     std::mem_fn(&ExecServer::on_command_received),
                     this, _1, _2));
+        in_client->signal_remote_disconnect().connect( boost::bind(
+                    std::mem_fn(&ExecServer::on_client_remote_disconnect),
+                    this, _1));
     }
 }
 
