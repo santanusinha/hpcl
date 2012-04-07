@@ -35,7 +35,7 @@ send_data( const SocketPtr &in_socket, const std::string &in_msg ) {
 int main() 
 try {
     SocketFactoryPtr factory = SocketFactory::create_factory();
-    SocketPtr socket = factory->create_client();
+    SocketPtr socket = factory->create_client( true );
     socket->signal_data_received().connect( handle_data );
     socket->signal_remote_disconnect().connect( handle_stop );
     socket->connect_to_server( "127.0.0.1", 1024 );

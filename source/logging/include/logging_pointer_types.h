@@ -16,9 +16,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef HPCL_MESSAGING_TYPES_FWD_H
-#define HPCL_MESSAGING_TYPES_FWD_H
+#ifndef HPCL_LOGGING_POINTER_TYPES_H
+#define HPCL_LOGGING_POINTER_TYPES_H
+
+#include <memory>
 
 namespace Hpcl {
+
+class RemoteLogServer;
+typedef std::shared_ptr<RemoteLogServer>  RemoteLogServerPtr;
+typedef std::weak_ptr<RemoteLogServer>  RemoteLogServerWeakPtr;
+
+class RemoteLogger;
+typedef std::shared_ptr<RemoteLogger>  RemoteLoggerPtr;
+typedef std::weak_ptr<RemoteLogger>  RemoteLoggerWeakPtr;
+
+class LoggingComponentFactory;
+typedef std::shared_ptr<LoggingComponentFactory>  LoggingComponentFactoryPtr;
+typedef std::weak_ptr<LoggingComponentFactory>  LoggingComponentFactoryWeakPtr;
+
 } //namespace Hpcl
-#endif //HPCL_MESSAGING_TYPES_FWD_H
+#endif //HPCL_LOGGING_POINTER_TYPES_H

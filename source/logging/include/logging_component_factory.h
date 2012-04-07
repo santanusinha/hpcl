@@ -16,45 +16,48 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef HPCL_SERVER_FACTORY_H
-#define HPCL_SERVER_FACTORY_H
-#include <memory>
+#ifndef HPCL_LOGGING_COMPONENT_FACTORY_H
+#define HPCL_LOGGING_COMPONENT_FACTORY_H
 
 #include "communication_pointer_types.h"
+#include "logging_pointer_types.h"
 
 namespace Hpcl {
-class SocketFactory: public std::enable_shared_from_this<SocketFactory> {
+
+class LoggingComponentFactory {
     public:
-        typedef std::shared_ptr<SocketFactory> Pointer;
-        typedef std::weak_ptr<SocketFactory> WeakPointer;
+        typedef LoggingComponentFactoryPtr Pointer;
+        typedef LoggingComponentFactoryWeakPtr WeakPointer;
 
-        static Pointer
+        virtual
+        ~LoggingComponentFactory();
+
+        LoggingComponentFactory( const LoggingComponentFactory &) = delete;
+        LoggingComponentFactory &
+        operator = ( const LoggingComponentFactory &) = delete;
+
+        static LoggingComponentFactoryPtr
         create_factory();
-        
-        virtual ~SocketFactory();
 
-        SocketFactory( const SocketFactory & ) = delete;
-
-        SocketFactory &
-        operator =( const SocketFactory & ) = delete;
-
-        ServerSocketPtr
+        RemoteLogServerPtr
         create_server();
 
-        SocketPtr
-        create_client( bool in_is_duplex );
+        RemoteLoggerPtr
+        create_client();
 
     protected:
-        SocketFactory();
+        LoggingComponentFactory();
 
-        virtual ServerSocketPtr
-        create_new_server_socket();
+        virtual RemoteLogServerPtr
+        create_new_log_server();
 
-        virtual SocketPtr
-        create_new_socket( bool in_is_duplex );
+        virtual RemoteLoggerPtr
+        create_new_logger();
+
+    private:
+        SocketFactoryPtr m_factory;
 };
 
 } //namespace Hpcl
 
-#endif
-
+#endif //HPCL_LOGGING_COMPONENT_FACTORY_H

@@ -1,4 +1,4 @@
-SUBDIRS = common communication remote-exec messaging logging
+SUBDIRS = include src
 
 MAINTAINERCLEANFILES = INSTALL Makefile.in aclocal.m4 configure
 

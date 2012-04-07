@@ -76,7 +76,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
         shutdown();    
 
     protected:
-        Socket();
+        Socket( bool in_is_duplex );
 
         virtual void
         on_data_received( const MemInfo &in_data );
@@ -102,6 +102,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
         std::shared_ptr<Notifier> m_event_notifier;
         std::exception_ptr m_error;
         std::atomic<bool> m_is_connected;
+        bool m_is_duplex;
 };
 
 } //namespace Hpcl

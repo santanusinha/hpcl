@@ -32,6 +32,9 @@ source/remote-exec/src/Makefile
 source/messaging/Makefile
 source/messaging/include/Makefile
 source/messaging/src/Makefile
+source/logging/Makefile
+source/logging/include/Makefile
+source/logging/src/Makefile
 ])
 
 AC_OUTPUT

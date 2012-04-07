@@ -16,46 +16,49 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
+#endif //HAVE_CONFIG_H
 
-#include "server_socket.h"
-#include "socket.h"
+#include "logging_component_factory.h"
+#include "remote_log_server.h"
+#include "remote_logger.h"
 #include "socket_factory.h"
-#include "syscall_error.h"
 
 namespace Hpcl {
-SocketFactory::SocketFactory()
-    :enable_shared_from_this() {
+
+LoggingComponentFactory::~LoggingComponentFactory() {
 }
 
-SocketFactory::~SocketFactory() {
+LoggingComponentFactoryPtr
+LoggingComponentFactory::create_factory() {
+    return LoggingComponentFactoryPtr(new LoggingComponentFactory());
 }
 
-SocketFactoryPtr
-SocketFactory::create_factory() {
-    return SocketFactoryPtr( new SocketFactory() );
+RemoteLogServerPtr
+LoggingComponentFactory::create_server() {
+    return create_new_log_server();
 }
 
-ServerSocketPtr
-SocketFactory::create_server() {
-    return create_new_server_socket();
+RemoteLoggerPtr
+LoggingComponentFactory::create_client() {
+    return create_new_logger();
 }
 
-SocketPtr
-SocketFactory::create_client( bool in_is_duplex ) {
-    return create_new_socket( in_is_duplex );
+LoggingComponentFactory::LoggingComponentFactory()
+    :m_factory( SocketFactory::create_factory() ) {
 }
 
-ServerSocketPtr
-SocketFactory::create_new_server_socket() {
-    return ServerSocketPtr( new ServerSocket( shared_from_this() ) );
+RemoteLogServerPtr
+LoggingComponentFactory::create_new_log_server() {
+    return std::shared_ptr<RemoteLogServer>(
+                            new RemoteLogServer( m_factory ) );
 }
 
-SocketPtr
-SocketFactory::create_new_socket( bool in_is_duplex ) {
-    return SocketPtr( new Socket(in_is_duplex) );
+RemoteLoggerPtr
+LoggingComponentFactory::create_new_logger() {
+    return std::shared_ptr<RemoteLogger>( new RemoteLogger( m_factory ) );
 }
 
 } //namespace Hpcl

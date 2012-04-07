@@ -16,34 +16,46 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef HPCL_COMMUNICATOR_H
-#define HPCL_COMMUNICATOR_H
+#ifndef HPCL_REMOTE_LOGGER_H
+#define HPCL_REMOTE_LOGGER_H
 
-#include <memory>
-#include <thread>
+#include <string>
 
-#include "server_socket.h"
-#include "socket.h"
-#include "socket_factory.h"
+#include "communication_pointer_types.h"
+#include "logging_pointer_types.h"
 
 namespace Hpcl {
 
-class Communicator {
+class RemoteLogger {
+    friend class LoggingComponentFactory;
     public:
-        typedef std::shared_ptr<Communicator> Pointer;
-        typedef std::weak_ptr<Communicator> WeakPointer;
+        typedef RemoteLoggerPtr Pointer;
+        typedef RemoteLoggerWeakPtr WeakPointer;
 
         virtual
-        ~Communicator();
+        ~RemoteLogger();
+
+        RemoteLogger( const RemoteLogger &) = delete;
+        RemoteLogger &
+        operator =( const RemoteLogger &) = delete;
+
+        void
+        connect( const std::string &in_host, int32_t in_port );
+
+        void
+        disconnect();
+
+        void
+        log( const std::string &in_log_message );
+
+    protected:
+        RemoteLogger( const SocketFactoryPtr &in_factory );
 
     private:
-        Communicator( const SocketFactoryPtr &in_factory,
-                        int32_t in_listen_port );
-        Communicator( const Communicator &) = delete;
-        Communicator &
-        operator = ( const Communicator &) = delete;
+        SocketFactoryPtr m_factory;
+        SocketPtr m_socket;
 };
 
 } //namespace Hpcl
 
-#endif //HPCL_COMMUNICATOR_H
+#endif //HPCL_REMOTE_LOGGER_H

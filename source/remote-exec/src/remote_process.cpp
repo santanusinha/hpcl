@@ -61,7 +61,7 @@ RemoteProcess::get_pid() const {
 
 void
 RemoteProcess::connect(const std::string &in_server, int32_t in_port) {
-    m_socket = m_factory->create_client();
+    m_socket = m_factory->create_client( true );
     m_socket->signal_data_received().connect( boost::bind(
                     std::mem_fn( &RemoteProcess::handle_server_response ),
                         this, _1, _2));

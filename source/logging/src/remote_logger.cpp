@@ -18,44 +18,54 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
+#endif //HAVE_CONFIG_H
 
-#include "server_socket.h"
+#include "remote_logger.h"
 #include "socket.h"
 #include "socket_factory.h"
-#include "syscall_error.h"
 
 namespace Hpcl {
-SocketFactory::SocketFactory()
-    :enable_shared_from_this() {
+
+RemoteLogger::~RemoteLogger() {
+    disconnect();
 }
 
-SocketFactory::~SocketFactory() {
+void
+RemoteLogger::connect( const std::string &in_host, int32_t in_port ) {
+    if( m_socket ) {
+        return;
+    }
+    m_socket = m_factory->create_client( false );
+    m_socket->connect_to_server( in_host, in_port );
+    return;
 }
 
-SocketFactoryPtr
-SocketFactory::create_factory() {
-    return SocketFactoryPtr( new SocketFactory() );
+void
+RemoteLogger::disconnect() {
+    if( !m_socket ) {
+        return;
+    }
+    m_socket->shutdown();
+    m_socket.reset();
+} 
+
+void
+RemoteLogger::log( const std::string &in_log_message ) {
+    if( !m_socket ) {
+        return;
+    }
+    if( in_log_message.size() > BUFSIZ ) {
+        //TODO::ERROR
+    }
+    char msg[BUFSIZ];
+    MemInfo log_msg( msg, BUFSIZ );
+    ::strcpy( msg, in_log_message.c_str() );
+    m_socket->send_data( log_msg );
 }
 
-ServerSocketPtr
-SocketFactory::create_server() {
-    return create_new_server_socket();
-}
-
-SocketPtr
-SocketFactory::create_client( bool in_is_duplex ) {
-    return create_new_socket( in_is_duplex );
-}
-
-ServerSocketPtr
-SocketFactory::create_new_server_socket() {
-    return ServerSocketPtr( new ServerSocket( shared_from_this() ) );
-}
-
-SocketPtr
-SocketFactory::create_new_socket( bool in_is_duplex ) {
-    return SocketPtr( new Socket(in_is_duplex) );
+RemoteLogger::RemoteLogger( const SocketFactoryPtr &in_factory )
+    :m_factory( in_factory ),
+    m_socket() {
 }
 
 } //namespace Hpcl

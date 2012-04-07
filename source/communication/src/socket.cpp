@@ -91,10 +91,12 @@ void
 Socket::start(int32_t in_connection_fd) {
     m_socket = in_connection_fd;
     m_event_notifier->init();
-    m_receiver_thread
-        = std::shared_ptr<std::thread>(
+    if( m_is_duplex ) {
+        m_receiver_thread
+            = std::shared_ptr<std::thread>(
                 new std::thread( boost::bind( std::mem_fn(
                                 &Socket::wait_for_data), this, m_error)));
+    }
 }
 
 bool
@@ -118,11 +120,13 @@ Socket::send_data( const MemInfo &in_data ) {
 
 void
 Socket::shutdown() {
-    if( !m_receiver_thread )
+    if( m_is_duplex && !m_receiver_thread )
         return;
-    m_event_notifier->notify( SocketEvents::SHUTDOWN_REQUEST );
-    m_receiver_thread->join();
-    hpcl_debug("Thread stopped\n");
+    if( m_is_duplex ) {
+        m_event_notifier->notify( SocketEvents::SHUTDOWN_REQUEST );
+        m_receiver_thread->join();
+        hpcl_debug("Thread stopped\n");
+    }
     if( -1 == ::shutdown( m_socket, SHUT_RDWR ) )
     {
 //        throw SyscallError() << boost::errinfo_errno(errno)
@@ -143,7 +147,7 @@ Socket::shutdown() {
     }
 }
 
-Socket::Socket()
+Socket::Socket( bool in_is_duplex )
     :enable_shared_from_this<Socket>(),
     m_socket(),
     m_signal_data_received(),
@@ -152,7 +156,8 @@ Socket::Socket()
     m_receiver_thread(),
     m_event_notifier(std::make_shared<Notifier>()),
     m_error(),
-    m_is_connected() {
+    m_is_connected(),
+    m_is_duplex( in_is_duplex ) {
         m_is_connected.store(false);
 }
 
@@ -191,14 +196,16 @@ Socket::wait_for_data( std::exception_ptr &out_error ) {
             char recv_buf[BUFSIZ];
             fd_set waitFDs;
             FD_ZERO(&waitFDs);
-            FD_SET( m_event_notifier->get_wait_fd(), &waitFDs );
+            if( m_is_duplex ) {
+                FD_SET( m_event_notifier->get_wait_fd(), &waitFDs );
+            }
             FD_SET( m_socket, &waitFDs );
             if( -1 == select( FD_SETSIZE, &waitFDs, NULL, NULL, NULL) )
             {
                 throw SyscallError() << boost::errinfo_errno(errno)
                             << boost::errinfo_api_function("select");
             }
-            if( SocketEvents::SHUTDOWN_REQUEST
+            if( m_is_duplex && SocketEvents::SHUTDOWN_REQUEST
                             == m_event_notifier->get_event_type() )
             {
                 hpcl_debug("Client socket shutdown requested\n");
