@@ -25,12 +25,13 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
-
+#include <netdb.h>
 
 #include "buffer.h"
 #include "notifier.h"
 #include "print.h"
 #include "socket.h"
+#include "semantic_error.h"
 #include "syscall_error.h"
 
 namespace {
@@ -61,22 +62,29 @@ void
 Socket::connect_to_server(
                     const std::string &in_server, int32_t in_port ) {
     int32_t client_socket = 0;
+    struct addrinfo *result = nullptr;
+    int gai_errno = 0;
+    if( 0 != (gai_errno
+                = getaddrinfo( in_server.c_str(), nullptr, nullptr, &result ) ) 
+        || nullptr == result ) {
+        throw SemanticError()
+            <<errinfo_errorid( ErrorID::SEMANTIC_ERR_HOST_NOT_FOUND );
+
+    }
     if ((client_socket = socket(
-                            PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+            result->ai_family, result->ai_socktype, result->ai_protocol)) < 0) {
         throw SyscallError() << boost::errinfo_errno(errno)
                             <<boost::errinfo_api_function("socket");
     } 
-    struct sockaddr_in server_info;
-    memset(&server_info, 0, sizeof(server_info));
-    server_info.sin_family = PF_INET;
-    server_info.sin_addr.s_addr = inet_addr( in_server.c_str() );
-    server_info.sin_port = htons(in_port);
+    (reinterpret_cast<struct sockaddr_in *>(result->ai_addr))->sin_port
+                                                                = htons(in_port);
     /* Establish connection */
-    if (::connect(client_socket, (struct sockaddr *) &server_info,
-                sizeof(server_info)) < 0) {
+    if (::connect(client_socket, result->ai_addr,
+                result->ai_addrlen) < 0) {
         throw SyscallError() << boost::errinfo_errno(errno)
                             <<boost::errinfo_api_function("connect");
     }
+    freeaddrinfo(result);
     int32_t flags = fcntl(client_socket, F_GETFL, 0);
     if( fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) )
     {
