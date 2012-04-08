@@ -93,7 +93,8 @@ try {
                 = RemoteExecComponentFactory::create_factory();
     ExecServerPtr server = factory->create_server();
     server->signal_child_started().connect( handle_child_process );
-    server->start( 1025 );
+    std::exception_ptr error;
+    server->listen( 1025, error );
     return 0;
 }
 catch( boost::exception &error ) {

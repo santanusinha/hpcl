@@ -58,7 +58,9 @@ ServerSocket::ServerSocket( const SocketFactoryPtr &in_factory )
     m_client_mutex(),
     m_all_clients_disconnected(),
     m_clients(),
-    m_disconnected_clients() {
+    m_disconnected_clients(),
+    m_stop_check_mutex(),
+    m_is_being_stopped() {
 }
 
 ServerSocket::~ServerSocket() {
@@ -228,6 +230,10 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
 
 void
 ServerSocket::shutdown() {
+    {
+        std::lock_guard<std::mutex> g( m_stop_check_mutex );
+        m_is_being_stopped = true;
+    }
     std::lock_guard<std::mutex> l(m_client_mutex);
     for( auto & client: m_clients ) {
         SocketPtr socket = client.first;
@@ -261,13 +267,16 @@ ServerSocket::client_stop( const SocketPtr &in_stopped_socket ) {
 
 void
 ServerSocket::client_remote_stop( const SocketPtr &in_stopped_socket ) {
-    std::unique_lock<std::mutex> l( m_client_mutex );
-    m_disconnected_clients.push_back( in_stopped_socket );
-    hpcl_debug("Remote disconnect called");
-    if( !m_event_notifier->get_event_type() )
-    {
-        m_event_notifier->notify(
-                    ServerSocketEvent::CLIENT_SOCKET_SHUTDOWN_REQUEST );
+    std::lock_guard<std::mutex> g( m_stop_check_mutex );
+    if( !m_is_being_stopped ) {
+        std::unique_lock<std::mutex> l( m_client_mutex );
+        m_disconnected_clients.push_back( in_stopped_socket );
+        hpcl_debug("Remote disconnect called");
+        if( !m_event_notifier->get_event_type() )
+        {
+            m_event_notifier->notify(
+                        ServerSocketEvent::CLIENT_SOCKET_SHUTDOWN_REQUEST );
+        }
     }
 }
 

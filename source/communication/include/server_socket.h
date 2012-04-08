@@ -108,6 +108,8 @@ class ServerSocket {
         std::condition_variable m_all_clients_disconnected;
         Clients m_clients;
         std::vector<SocketPtr> m_disconnected_clients;
+        std::mutex m_stop_check_mutex;
+        bool m_is_being_stopped;
 };
 
 

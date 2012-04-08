@@ -44,14 +44,11 @@ RemoteLogServer::listen( int32_t in_port, std::exception_ptr &out_error ) {
     m_server = m_factory->create_server();
     m_server->signal_client_created().connect( boost::bind(
                     std::mem_fn( &RemoteLogServer::on_create ), this, _1));
-    m_listen_thread = std::make_shared<std::thread>( boost::bind(
-                            std::mem_fn( &ServerSocket::listen ),
-                            m_server, in_port, std::ref( out_error ) ) );
-    m_listen_thread->join();
+    m_server->listen( in_port, out_error );
 }
 
 void
-RemoteLogServer::shutdown() {
+RemoteLogServer::stop() {
     if( !m_server ) {
         return;
     }

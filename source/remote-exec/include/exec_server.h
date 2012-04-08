@@ -36,7 +36,7 @@ class ExecServer {
         operator = (const ExecServer &) = delete;
 
         void
-        start( int32_t in_port);
+        listen( int32_t in_port, std::exception_ptr &out_error );
 
         void
         stop();

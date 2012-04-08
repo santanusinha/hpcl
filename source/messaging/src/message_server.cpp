@@ -55,7 +55,7 @@ MessageServer::signal_message_received() {
 }
 
 void
-MessageServer::listen( int32_t in_port ) {
+MessageServer::listen( int32_t in_port, std::exception_ptr &out_error ) {
     m_server->signal_client_created().connect( boost::bind(
                     std::mem_fn( &MessageServer::handle_new_client ),
                     this, _1 ));
@@ -64,37 +64,16 @@ MessageServer::listen( int32_t in_port ) {
                     std::mem_fn( &MessageServer::handle_new_client_connect ),
                     this, _1 ));
 
-    m_listener = std::make_shared<std::thread>( boost::bind(
-                    std::mem_fn( &ServerSocket::listen ),
-                    m_server, in_port, std::ref( m_server_error ) ) );
-    while(true)
-    {
-        std::unique_lock<std::mutex> l(m_message_mutex);
-        while( !m_stop )
-        {
-            m_message_event.wait(l);
-        }
-        if( m_stop ) {
-            while( !m_connected_sockets.empty() ) {
-                m_message_event.wait(l);
-            }
-            hpcl_debug("All clients exited\n");
-            break;
-        }
-    }
-    hpcl_debug("Calling shutdown\n");
-    m_server->shutdown();
-    m_listener->join();
+    m_server->listen( in_port, out_error );
     hpcl_debug("Stopped\n");
 }
 
 void
-MessageServer::stop_request() {
-    {
-        std::unique_lock<std::mutex> l(m_message_mutex);
-        m_stop = true;
-        m_message_event.notify_one();
+MessageServer::stop() {
+    if( !m_server ) {
+        return;
     }
+    m_server->shutdown();
 }
 
 void

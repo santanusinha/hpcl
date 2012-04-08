@@ -19,6 +19,7 @@
 #ifndef HPCL_MESSAGE_SERVER_H
 #define HPCL_MESSAGE_SERVER_H
 
+#include <exception>
 #include <memory>
 #include <queue>
 #include <set>
@@ -49,10 +50,10 @@ class MessageServer {
         signal_message_received();
 
         void
-        listen( int32_t in_port );
+        listen( int32_t in_port, std::exception_ptr &out_error );
 
         void
-        stop_request();
+        stop();
 
     protected:
         MessageServer( const MessageComponentFactoryPtr &in_factory,

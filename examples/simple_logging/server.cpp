@@ -13,7 +13,7 @@ class LogServer {
         log_received( const std::string &in_message ) {
             m_fout<<in_message;
             m_fout.close();
-            m_server->shutdown();
+            m_server->stop();
         }
 
         void

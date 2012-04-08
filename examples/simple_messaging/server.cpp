@@ -31,7 +31,7 @@ class ServerFSM {
                 case MessageType::MESSAGE_COMPLETED:
                 {
                     std::cout<<"Client completed"<<std::endl;
-                    m_server->stop_request();
+                    m_server->stop();
                     break;
                 }
                 default:
@@ -43,7 +43,11 @@ class ServerFSM {
 
         void
         run() {
-            m_server->listen( 1026 );
+            std::exception_ptr error;
+            m_server->listen( 1026, error );
+            if( error ) {
+                std::rethrow_exception( error );
+            }
         }
 
         ServerFSM()

@@ -55,7 +55,7 @@ class RemoteLogServer {
         listen( int32_t in_port, std::exception_ptr &out_error );
 
         void
-        shutdown();
+        stop();
 
     protected:
         explicit

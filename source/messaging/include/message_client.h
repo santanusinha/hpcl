@@ -58,8 +58,8 @@ class MessageClient : public std::enable_shared_from_this<MessageClient> {
 
         template <typename _Tp>
         void
-        send_message( _Tp &in_msg ) {
-            MemInfo info( reinterpret_cast<char *>(&in_msg), sizeof(_Tp) );
+        send_message( const _Tp &in_msg ) {
+            MemInfo info( reinterpret_cast<const char *>(&in_msg), sizeof(_Tp) );
             send_message_impl( info );
         }
 
