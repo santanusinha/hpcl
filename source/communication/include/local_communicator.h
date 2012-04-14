@@ -21,14 +21,22 @@
 
 #include <cstdint>
 #include <memory>
-#include <sys/ipc.h>
+#include <sstream>
+#include <string>
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/exception/all.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 
 #include "communication_pointer_types.h"
 #include "meminfo.h"
 
 namespace Hpcl {
+
+class DataExchange;
+typedef DataExchange * DataExchangePtr;
 
 class LocalCommunicator {
     public:
@@ -47,31 +55,65 @@ class LocalCommunicator {
         operator = ( const LocalCommunicator &) = delete;
 
         void
-        init( int32_t in_module_id,
-              const std::string &in_path,
-              size_t in_data_size,
-              Type in_type );
+        init( const std::string &in_id_string, Type in_type,
+                size_t in_max_size);
 
+        template<typename _Tp>
         void
-        send( const MemInfo &in_data );
+        send( const _Tp &in_data );
 
+        template<typename _Tp>
         void
-        receive( MemInfo &out_data );
+        receive( _Tp &out_data );
 
     private:
+        struct ShmRemove;
+        typedef std::shared_ptr<ShmRemove> ShmRemovePtr;
+
         void
         create_server_memory();
 
         void
         create_client_memory();
 
-        int32_t m_module_id;
-        key_t m_data_key;
-        size_t m_data_size;
+        void
+        send_data( const std::string &in_data );
+
+        void
+        receive_data( std::string &out_data );
+
+        typedef boost::interprocess::shared_memory_object SharedMemory;
+        typedef std::shared_ptr<SharedMemory> SharedMemoryPtr;
+        typedef boost::interprocess::mapped_region MappedRegion;
+        typedef std::shared_ptr<MappedRegion> MappedRegionPtr;
+
+        std::string m_id_string;
         Type m_type;
-        int32_t m_data_id;
-        char *m_memory;
+        size_t m_max_size;
+        SharedMemoryPtr m_shm;
+        MappedRegionPtr m_region;
+        DataExchangePtr m_exchange;
+        ShmRemovePtr m_remover;
 };
+
+template<typename _Tp>
+void
+LocalCommunicator::send( const _Tp &in_data ) {
+    std::ostringstream ofs;
+    boost::archive::text_oarchive oa(ofs);
+    oa & in_data;
+    send_data( ofs.str() );
+ }
+
+template<typename _Tp>
+void
+LocalCommunicator::receive( _Tp &out_data ) {
+    std::string buf;
+    receive_data(buf);
+    std::istringstream ifs( buf );
+    boost::archive::text_iarchive ia( ifs );
+    ia & out_data;
+}
 
 } //namespace Hpcl
 

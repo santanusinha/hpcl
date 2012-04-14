@@ -73,5 +73,5 @@ int main() {
         std::cerr<<"Error occurred [" <<e.what() <<"]"<<std::endl;
         return -1;
     }
-return 0;
+    return 0;
 }
