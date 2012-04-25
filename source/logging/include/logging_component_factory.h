@@ -40,19 +40,19 @@ class LoggingComponentFactory {
         create_factory();
 
         RemoteLogServerPtr
-        create_server();
+        create_remote_log_server();
 
         RemoteLoggerPtr
-        create_client();
+        create_remote_logger();
 
     protected:
         LoggingComponentFactory();
 
         virtual RemoteLogServerPtr
-        create_new_log_server();
+        create_new_remote_log_server();
 
         virtual RemoteLoggerPtr
-        create_new_logger();
+        create_new_remote_logger();
 
     private:
         SocketFactoryPtr m_factory;

@@ -81,7 +81,7 @@ ExecServer::~ExecServer() {
 
 void
 ExecServer::listen( int32_t in_port, std::exception_ptr &out_error) {
-    m_server = m_socket_factory->create_server();
+    m_server = m_socket_factory->create_server_socket();
     m_server->signal_client_created().connect( boost::bind(
                         std::mem_fn( &ExecServer::on_client_created),
                         this, _1 ));

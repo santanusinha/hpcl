@@ -37,13 +37,13 @@ LoggingComponentFactory::create_factory() {
 }
 
 RemoteLogServerPtr
-LoggingComponentFactory::create_server() {
-    return create_new_log_server();
+LoggingComponentFactory::create_remote_log_server() {
+    return create_new_remote_log_server();
 }
 
 RemoteLoggerPtr
-LoggingComponentFactory::create_client() {
-    return create_new_logger();
+LoggingComponentFactory::create_remote_logger() {
+    return create_new_remote_logger();
 }
 
 LoggingComponentFactory::LoggingComponentFactory()
@@ -51,13 +51,13 @@ LoggingComponentFactory::LoggingComponentFactory()
 }
 
 RemoteLogServerPtr
-LoggingComponentFactory::create_new_log_server() {
+LoggingComponentFactory::create_new_remote_log_server() {
     return std::shared_ptr<RemoteLogServer>(
                             new RemoteLogServer( m_factory ) );
 }
 
 RemoteLoggerPtr
-LoggingComponentFactory::create_new_logger() {
+LoggingComponentFactory::create_new_remote_logger() {
     return std::shared_ptr<RemoteLogger>( new RemoteLogger( m_factory ) );
 }
 

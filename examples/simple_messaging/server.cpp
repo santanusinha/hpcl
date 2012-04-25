@@ -52,7 +52,7 @@ class ServerFSM {
 
         ServerFSM()
             :m_factory( MessageComponentFactory::create_factory() ),
-            m_server( m_factory->create_server() ) {
+            m_server( m_factory->create_message_server() ) {
                 m_server->signal_message_received().connect( boost::bind(
                         std::mem_fn( &ServerFSM::handle_client_message ),
                         this, _1, _2 ));

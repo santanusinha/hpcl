@@ -26,14 +26,14 @@ class LogServer {
         void
         run() {
             m_messenger = MessageComponentFactory::create_factory()
-                                                    ->create_client();
+                                                    ->create_message_client();
             m_messenger->signal_message_received().connect(
                     boost::bind(
                         std::mem_fn( &LogServer::handle_server_commands),
                         this, _1));
             m_messenger->connect( "localhost", Ports::MESSAGE_PORT);
             m_log_server = LoggingComponentFactory::create_factory()
-                                        ->create_server();
+                                        ->create_remote_log_server();
             m_log_server->signal_log_message_received().connect(
                     boost::bind(
                         std::mem_fn( &LogServer::log_received ),

@@ -55,7 +55,7 @@ class ClientFSM {
 
         ClientFSM()
             :m_client(
-                    MessageComponentFactory::create_factory()->create_client() ) {
+                    MessageComponentFactory::create_factory()->create_message_client() ) {
                 m_client->signal_message_received().connect( boost::bind(
                         std::mem_fn( &ClientFSM::handle_server_request),
                         this, _1 ));

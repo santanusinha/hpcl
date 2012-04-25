@@ -39,10 +39,10 @@ class SocketFactory: public std::enable_shared_from_this<SocketFactory> {
         operator =( const SocketFactory & ) = delete;
 
         ServerSocketPtr
-        create_server();
+        create_server_socket();
 
         SocketPtr
-        create_client( bool in_is_duplex );
+        create_socket( bool in_is_duplex );
 
     protected:
         SocketFactory();

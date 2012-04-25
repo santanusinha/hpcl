@@ -199,7 +199,7 @@ ServerSocket::listen( int32_t in_port, std::exception_ptr &out_error ) {
                 throw SyscallError() <<boost::errinfo_errno(errno)
                                 << boost::errinfo_api_function("fcntl");
             }
-            SocketPtr client= m_factory->create_client( true );
+            SocketPtr client= m_factory->create_socket( true );
             {
                 std::unique_lock<std::mutex> l( m_client_mutex );
                 ClientConnectionInfo info;

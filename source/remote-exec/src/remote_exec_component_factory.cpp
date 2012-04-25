@@ -40,12 +40,12 @@ RemoteExecComponentFactory::create_factory() {
 }
 
 ExecServerPtr
-RemoteExecComponentFactory::create_server() {
+RemoteExecComponentFactory::create_exec_server() {
     return create_new_exec_server();
 }
 
 RemoteProcessPtr
-RemoteExecComponentFactory::create_client() {
+RemoteExecComponentFactory::create_remote_process() {
     return create_new_remote_process();
 }
 

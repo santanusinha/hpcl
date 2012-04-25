@@ -23,7 +23,7 @@ class LogServer {
         }
 
         LogServer( const std::string &in_filename )
-            :m_server( LoggingComponentFactory::create_factory()->create_server() ),
+            :m_server( LoggingComponentFactory::create_factory()->create_remote_log_server() ),
             m_fout( in_filename.c_str(), std::ios::out ) {
                 m_server->signal_log_message_received().connect( boost::bind(
                             std::mem_fn( &LogServer::log_received ),

@@ -19,7 +19,7 @@ completed(int32_t) {
 int main() {
     RemoteExecComponentFactoryPtr factory
                 = RemoteExecComponentFactory::create_factory();
-    RemoteProcessPtr client = factory->create_client();
+    RemoteProcessPtr client = factory->create_remote_process();
     client->signal_process_completed().connect(
                         boost::bind( completed, _1 ) );
     std::string cmd;

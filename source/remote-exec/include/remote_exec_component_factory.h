@@ -42,10 +42,10 @@ class RemoteExecComponentFactory
         operator =( const RemoteExecComponentFactory & ) = delete;
 
         ExecServerPtr
-        create_server();
+        create_exec_server();
 
         RemoteProcessPtr
-        create_client();
+        create_remote_process();
 
     protected:
         RemoteExecComponentFactory();

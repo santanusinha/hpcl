@@ -46,23 +46,23 @@ class MessageComponentFactory
         ~MessageComponentFactory();
 
         MessageServerPtr
-        create_server();
+        create_message_server();
 
         MessageClientPtr
-        create_client();
+        create_message_client();
 
     protected:
         explicit MessageComponentFactory(
                             const SocketFactoryPtr &in_factory );
 
         virtual MessageServerPtr
-        create_message_server();
+        create_new_message_server();
 
         virtual MessageClientPtr
-        create_client_side_client();
+        create_new_client_side_message_client();
 
         virtual MessageClientPtr
-        create_server_side_client( const SocketPtr &in_socket );
+        create_new_server_side_message_client( const SocketPtr &in_socket );
 
     private:
         SocketFactoryPtr m_factory;

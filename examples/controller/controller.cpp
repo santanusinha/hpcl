@@ -31,7 +31,7 @@ class Controller {
                     RemoteExecComponentFactory::create_factory() ),
             m_msg_factory(
                     MessageComponentFactory::create_factory() ),
-            m_server( m_msg_factory->create_server() ),
+            m_server( m_msg_factory->create_message_server() ),
             m_server_error(),
             m_log_server_proc(),
             m_log_messenger(),
@@ -50,7 +50,7 @@ class Controller {
             auto t = std::make_shared<std::thread>( boost::bind(
                         std::mem_fn( &MessageServer::listen ),
                         m_server, Ports::MESSAGE_PORT, std::ref( m_server_error ) ) );
-            m_log_server_proc = m_exec_factory->create_client();
+            m_log_server_proc = m_exec_factory->create_remote_process();
             m_log_server_proc->signal_process_started().connect( boost::bind(
                             std::mem_fn( &Controller::handle_process_start ),
                             this, _1, _2));
@@ -100,14 +100,14 @@ class Controller {
                 {
                     std::cout<<"Log started"<<std::endl;
                     m_log_messenger = in_client;
-                    RemoteProcessPtr process1 = m_exec_factory->create_client();
+                    RemoteProcessPtr process1 = m_exec_factory->create_remote_process();
                     process1->signal_process_started().connect( boost::bind(
                                 std::mem_fn( &Controller::handle_process_start ),
                                 this, _1, _2));
                     process1->signal_process_completed().connect( boost::bind(
                                 std::mem_fn( &Controller::handle_process_stop ),
                                 this, _1, _2));
-                    RemoteProcessPtr process2 = m_exec_factory->create_client();
+                    RemoteProcessPtr process2 = m_exec_factory->create_remote_process();
                     process2->signal_process_started().connect( boost::bind(
                                 std::mem_fn( &Controller::handle_process_start ),
                                 this, _1, _2));

@@ -91,7 +91,7 @@ int main()
 try {
     RemoteExecComponentFactoryPtr factory
                 = RemoteExecComponentFactory::create_factory();
-    ExecServerPtr server = factory->create_server();
+    ExecServerPtr server = factory->create_exec_server();
     server->signal_child_started().connect( handle_child_process );
     std::exception_ptr error;
     server->listen( 1025, error );

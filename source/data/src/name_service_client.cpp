@@ -56,7 +56,7 @@ NameServiceClient::~NameServiceClient() {
 
 void
 NameServiceClient::connect( const std::string &in_hostname, int32_t in_port ) {
-    m_client = m_socket_factory->create_client( true );
+    m_client = m_socket_factory->create_socket( true );
     m_client->signal_data_received().connect( boost::bind(
                 std::mem_fn( &NameServiceClient::on_data_received ),
                 this, _1, _2 ));

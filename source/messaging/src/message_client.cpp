@@ -39,7 +39,7 @@ MessageClient::connect(const std::string &in_server, int32_t in_port) {
         return;
     }
     if( !m_socket ) {
-        m_socket = m_socket_factory->create_client( true );
+        m_socket = m_socket_factory->create_socket( true );
         m_socket->signal_data_received().connect( boost::bind(
                 std::mem_fn( &MessageClient::handle_data_received ),
                 this, _1, _2));

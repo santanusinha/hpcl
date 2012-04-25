@@ -5,7 +5,7 @@ CXXFLAGS += -Wall -Wextra -Weffc++ -std=c++0x -pthread -g3 -O0
 LDFLAGS += -L $(HPCL_BASE)/lib \
            -lhpcl-communication \
            -lhpcl-common \
-           -Wl,-rpath -Wl,$(HPCL_BASE)/lib
+           -Wl,-rpath -Wl,$(HPCL_BASE)/lib -lrt
 
 all: client server
 

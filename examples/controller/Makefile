@@ -8,7 +8,7 @@ LDFLAGS += -L $(HPCL_BASE)/lib \
            -lhpcl-remote-exec \
            -lhpcl-communication \
            -lhpcl-common \
-           -Wl,-rpath -Wl,$(HPCL_BASE)/lib
+           -Wl,-rpath -Wl,$(HPCL_BASE)/lib -lrt
 
 all: logd execd agent controller
 

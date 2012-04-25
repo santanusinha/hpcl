@@ -36,23 +36,23 @@ MessageComponentFactory::~MessageComponentFactory() {
 }
 
 MessageServerPtr
-MessageComponentFactory::create_server() {
-    return create_message_server();
+MessageComponentFactory::create_message_server() {
+    return create_new_message_server();
 }
 
 MessageClientPtr
-MessageComponentFactory::create_client() {
-    return create_client_side_client();
+MessageComponentFactory::create_message_client() {
+    return create_new_client_side_message_client();
 }
 
 MessageServerPtr
-MessageComponentFactory::create_message_server() {
+MessageComponentFactory::create_new_message_server() {
     return MessageServerPtr(
             new MessageServer( shared_from_this(), m_factory ) );
 }
 
 MessageClientPtr
-MessageComponentFactory::create_server_side_client(
+MessageComponentFactory::create_new_server_side_message_client(
                                 const SocketPtr &in_socket ) {
     //TODO::REWRITE USING DELEGATED CONSTRUCTOR
     MessageClientPtr client(new MessageClient( SocketFactoryPtr() ) );
@@ -61,7 +61,7 @@ MessageComponentFactory::create_server_side_client(
 }
 
 MessageClientPtr
-MessageComponentFactory::create_client_side_client() {
+MessageComponentFactory::create_new_client_side_message_client() {
     return MessageClientPtr( new MessageClient( m_factory ) );
 }
 

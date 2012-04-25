@@ -6,7 +6,7 @@ LDFLAGS += -L $(HPCL_BASE)/lib \
            -lhpcl-logging \
            -lhpcl-communication \
            -lhpcl-common \
-           -Wl,-rpath -Wl,$(HPCL_BASE)/lib
+           -Wl,-rpath -Wl,$(HPCL_BASE)/lib -lrt
 
 all: client server
 

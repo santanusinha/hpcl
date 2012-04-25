@@ -39,12 +39,12 @@ SocketFactory::create_factory() {
 }
 
 ServerSocketPtr
-SocketFactory::create_server() {
+SocketFactory::create_server_socket() {
     return create_new_server_socket();
 }
 
 SocketPtr
-SocketFactory::create_client( bool in_is_duplex ) {
+SocketFactory::create_socket( bool in_is_duplex ) {
     return create_new_socket( in_is_duplex );
 }
 

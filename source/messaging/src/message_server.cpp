@@ -34,7 +34,7 @@ MessageServer::MessageServer( const MessageComponentFactoryPtr &in_factory,
                                 const SocketFactoryPtr &in_socket_factory )
     :m_factory( in_factory),
     m_socket_factory( in_socket_factory),
-    m_server( m_socket_factory->create_server() ),
+    m_server( m_socket_factory->create_server_socket() ),
     m_listener(),
     m_server_error(),
     m_message_mutex(),
@@ -118,7 +118,9 @@ MessageServer::handle_new_client( const SocketPtr &in_socket ) {
     in_socket->signal_data_received().connect( boost::bind(
         std::mem_fn( &MessageServer::handle_client_request ), this, _1, _2));
     m_connected_sockets.insert( in_socket );
-    MessageClientPtr client = m_factory->create_server_side_client( in_socket );
+    MessageClientPtr client
+                = m_factory->create_new_server_side_message_client(
+                                                                in_socket );
     m_clients.insert( std::make_pair( in_socket, client ) );
 }
 

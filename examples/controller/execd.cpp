@@ -23,7 +23,7 @@ int main()
 try {
     RemoteExecComponentFactoryPtr factory
                 = RemoteExecComponentFactory::create_factory();
-    ExecServerPtr server = factory->create_server();
+    ExecServerPtr server = factory->create_exec_server();
 //    server->signal_child_started().connect( handle_child_process );
 //    server->signal_child_completed().connect( handle_child_completion );
     std::exception_ptr error;

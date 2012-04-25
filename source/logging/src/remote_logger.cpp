@@ -35,7 +35,7 @@ RemoteLogger::connect( const std::string &in_host, int32_t in_port ) {
     if( m_socket ) {
         return;
     }
-    m_socket = m_factory->create_client( false );
+    m_socket = m_factory->create_socket( false );
     m_socket->connect_to_server( in_host, in_port );
     return;
 }
