@@ -99,6 +99,7 @@ void
 Socket::start(int32_t in_connection_fd) {
     m_socket = in_connection_fd;
     m_event_notifier->init();
+    m_is_connected.store(true);
     if( m_is_duplex ) {
         m_receiver_thread
             = std::shared_ptr<std::thread>(
@@ -130,6 +131,8 @@ void
 Socket::shutdown() {
     if( m_is_duplex && !m_receiver_thread )
         return;
+//    if( !get_is_connected() )
+//        return;
     if( m_is_duplex ) {
         m_event_notifier->notify( SocketEvents::SHUTDOWN_REQUEST );
         m_receiver_thread->join();
@@ -194,7 +197,6 @@ Socket::on_remote_disconnect( const SocketPtr &in_this ) {
 void
 Socket::wait_for_data( std::exception_ptr &out_error ) {
     out_error = std::exception_ptr();
-    m_is_connected.store(true);
     try {
         ssize_t received = 0;
         int32_t receivedError = 0;
@@ -255,8 +257,8 @@ Socket::wait_for_data( std::exception_ptr &out_error ) {
         }
         while( received > 0 || receivedError == EAGAIN );
         m_is_connected.store(false);
-        m_signal_remote_disconnect( shared_from_this() );
         on_remote_disconnect( shared_from_this() );
+        m_signal_remote_disconnect( shared_from_this() );
     }
     catch( ... ) {
         out_error = std::current_exception();

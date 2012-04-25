@@ -8,23 +8,14 @@
 
 using namespace Hpcl;
 
-const int32_t c_module_id = 101;
-
 int main(int argc, char *argv[] ) {
-    if(argc < 1 ) {
-        std::cerr<<"Please provide init string given by server as argument"<<std::endl;
-        return -1;
-    }
-    std::string exec_name = argv[1]; //Init string from server console
+    std::string exec_name = "LocalCommExample";
     try {
         LocalCommunicatorPtr comm = LocalCommunicatorPtr(
                                             new LocalCommunicator());
-        comm->init( c_module_id, exec_name, BUFSIZ,
-                                    LocalCommunicator::Type::CLIENT);
-        char buf[BUFSIZ];
+        comm->init( exec_name, LocalCommunicator::Type::CLIENT, BUFSIZ);
         std::string msg = "Hello World";
-        ::strcpy(buf, msg.c_str());
-        comm->send( MemInfo( buf, strlen(buf) + 1) );
+        comm->send( msg );
     }
     catch(SemanticError &error) {
         std::cerr<<"Error occurred in local communicator"<<std::endl;

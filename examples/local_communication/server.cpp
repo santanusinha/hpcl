@@ -9,23 +9,19 @@
 
 using namespace Hpcl;
 
-const int32_t c_module_id = 101;
-
 int main(int argc, char *argv[] ) {
     if(argc) {
     }
     try
     {
-        std::string exec_name = argv[0];
+        std::string exec_name = "LocalCommExample";
         std::cout<<"Init string:"<<exec_name<<std::endl;
         LocalCommunicatorPtr comm = LocalCommunicatorPtr(
                                             new LocalCommunicator());
-        comm->init( c_module_id, exec_name, BUFSIZ,
-                                    LocalCommunicator::Type::SERVER);
-        MemInfo received_data(0,0);
-        comm->receive( received_data );
-        std::cout<<"Received: "<<received_data.get_data()<<std::endl;
-        sleep(1);
+        comm->init( exec_name, LocalCommunicator::Type::SERVER, BUFSIZ);
+        std::string data;
+        comm->receive( data );
+        std::cout<<"Received: "<<data<<std::endl;
     }
     catch(SemanticError &error) {
         std::cerr<<"Error occurred in local communicator"<<std::endl;

@@ -16,26 +16,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef HPCL_ERROR_ID_H
-#define HPCL_ERROR_ID_H
+#ifndef HPCL_DATA_POINTER_TYPES_H
+#define HPCL_DATA_POINTER_TYPES_H
+
+#include <memory>
 
 namespace Hpcl {
+ //TODO::replace with std::shared_ptr once serialization is supportedclass HostInfo;
 
-enum ErrorID {
-    SEMANTIC_ERR_INVALID_PARAMETER,
-    SEMANTIC_ERR_INIT_NOT_DONE,
-    SEMANTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS,
-    SEMANTIC_ERR_HOST_NOT_FOUND,
-    SEMANTIC_ERR_IPC_FAILURE,
-    SEMANTIC_ERR_NOT_CONNECTED,
-    ERROR_ID_COUNT
-};
+class DataServer;
+typedef std::shared_ptr<DataServer> DataServerPtr;
+typedef std::weak_ptr<DataServer> DataServerWeakPtr;
 
-typedef boost::error_info<struct tag_error_id, ErrorID> errinfo_errorid;
+class NameServiceClient;
+typedef std::shared_ptr<NameServiceClient> NameServiceClientPtr;
+typedef std::weak_ptr<NameServiceClient> NameServiceClientWeakPtr;
 
-std::string
-get_error_message( ErrorID in_error_id );
+class DataComponentFactory;
+typedef std::shared_ptr<DataComponentFactory> DataComponentFactoryPtr;
+typedef std::weak_ptr<DataComponentFactory> DataComponentFactoryWeakPtr;
 
-} //namespace Hpcl
-
-#endif //HPCL_ERROR_ID_H
+} //namespace Hpcl 
+#endif //HPCL_DATA_POINTER_TYPES_H

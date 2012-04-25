@@ -33,7 +33,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = source
+subdir = source/data
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -204,8 +204,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = common communication data remote-exec messaging logging
-MAINTAINERCLEANFILES = INSTALL Makefile.in aclocal.m4 configure
+SUBDIRS = include src
+MAINTAINERCLEANFILES = Makefile.in
 all: all-recursive
 
 .SUFFIXES:
@@ -218,9 +218,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu source/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu source/data/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu source/Makefile
+	  $(AUTOMAKE) --gnu source/data/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

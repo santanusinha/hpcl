@@ -14870,7 +14870,7 @@ else
 fi
 
 
-ac_config_files="$ac_config_files Makefile source/Makefile source/common/Makefile source/common/include/Makefile source/common/src/Makefile source/communication/Makefile source/communication/include/Makefile source/communication/src/Makefile source/remote-exec/Makefile source/remote-exec/include/Makefile source/remote-exec/src/Makefile source/messaging/Makefile source/messaging/include/Makefile source/messaging/src/Makefile source/logging/Makefile source/logging/include/Makefile source/logging/src/Makefile"
+ac_config_files="$ac_config_files Makefile source/Makefile source/common/Makefile source/common/include/Makefile source/common/src/Makefile source/communication/Makefile source/communication/include/Makefile source/communication/src/Makefile source/data/Makefile source/data/include/Makefile source/data/src/Makefile source/remote-exec/Makefile source/remote-exec/include/Makefile source/remote-exec/src/Makefile source/messaging/Makefile source/messaging/include/Makefile source/messaging/src/Makefile source/logging/Makefile source/logging/include/Makefile source/logging/src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -15994,6 +15994,9 @@ do
     "source/communication/Makefile") CONFIG_FILES="$CONFIG_FILES source/communication/Makefile" ;;
     "source/communication/include/Makefile") CONFIG_FILES="$CONFIG_FILES source/communication/include/Makefile" ;;
     "source/communication/src/Makefile") CONFIG_FILES="$CONFIG_FILES source/communication/src/Makefile" ;;
+    "source/data/Makefile") CONFIG_FILES="$CONFIG_FILES source/data/Makefile" ;;
+    "source/data/include/Makefile") CONFIG_FILES="$CONFIG_FILES source/data/include/Makefile" ;;
+    "source/data/src/Makefile") CONFIG_FILES="$CONFIG_FILES source/data/src/Makefile" ;;
     "source/remote-exec/Makefile") CONFIG_FILES="$CONFIG_FILES source/remote-exec/Makefile" ;;
     "source/remote-exec/include/Makefile") CONFIG_FILES="$CONFIG_FILES source/remote-exec/include/Makefile" ;;
     "source/remote-exec/src/Makefile") CONFIG_FILES="$CONFIG_FILES source/remote-exec/src/Makefile" ;;

@@ -16,26 +16,40 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef HPCL_ERROR_ID_H
-#define HPCL_ERROR_ID_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif //HAVE_CONFIG_H
+
+#include "data_component_factory.h"
+#include "name_service_client.h"
+#include "socket_factory.h"
 
 namespace Hpcl {
 
-enum ErrorID {
-    SEMANTIC_ERR_INVALID_PARAMETER,
-    SEMANTIC_ERR_INIT_NOT_DONE,
-    SEMANTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS,
-    SEMANTIC_ERR_HOST_NOT_FOUND,
-    SEMANTIC_ERR_IPC_FAILURE,
-    SEMANTIC_ERR_NOT_CONNECTED,
-    ERROR_ID_COUNT
-};
+DataComponentFactoryPtr
+DataComponentFactory::create_factory() {
+    return DataComponentFactoryPtr( new DataComponentFactory(
+                SocketFactory::create_factory() ) );
+}
 
-typedef boost::error_info<struct tag_error_id, ErrorID> errinfo_errorid;
+DataComponentFactory::~DataComponentFactory() {
+}
 
-std::string
-get_error_message( ErrorID in_error_id );
+NameServiceClientPtr
+DataComponentFactory::create_name_service_client() {
+    return create_new_name_service_client();
+}
+
+DataComponentFactory::DataComponentFactory(
+            const SocketFactoryPtr &in_socket_factory )
+    :m_socket_factory( in_socket_factory ) {
+}
+
+NameServiceClientPtr
+DataComponentFactory::create_new_name_service_client() {
+    return NameServiceClientPtr(
+                new NameServiceClient( m_socket_factory ) );
+}
 
 } //namespace Hpcl
 
-#endif //HPCL_ERROR_ID_H
